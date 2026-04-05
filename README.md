@@ -26,3 +26,4 @@ El proyecto incluye:
 - flujo de turnos por fases
 - reconexion por `playerId`
 - UI de tablero con drag and drop
+# LaCampaniaOnline
