@@ -1,6 +1,7 @@
 import { router, useLocalSearchParams } from "expo-router";
 import { useEffect, useRef } from "react";
 import { StyleSheet, Text, View, useWindowDimensions } from "react-native";
+import { DEFAULT_PLAYER_NAME } from "../../../../lib/lore";
 import { MesaTactica } from "../components/game/MesaTactica";
 import { resolveGameViewport } from "../components/game/viewport";
 import { Screen } from "../components/ui/Screen";
@@ -22,7 +23,7 @@ export default function PantallaSolo() {
 
   useEffect(() => {
     if (!estado && profile) {
-      iniciar(profile.displayName || "Jugador", params.dificultad ?? profile.preferencias.lastCpuDifficulty);
+      iniciar(profile.displayName || DEFAULT_PLAYER_NAME, params.dificultad ?? profile.preferencias.lastCpuDifficulty);
     }
   }, [profile, estado, iniciar, params.dificultad]);
 
@@ -60,8 +61,8 @@ export default function PantallaSolo() {
     return (
       <Screen scroll={scroll} edgeToEdge>
         <View style={styles.center}>
-          <Text style={styles.placeholderTitle}>Preparando rival automático</Text>
-          <Text style={styles.placeholderCopy}>Armando la partida local nativa.</Text>
+          <Text style={styles.placeholderTitle}>Ensillando la mesa</Text>
+          <Text style={styles.placeholderCopy}>Se esta armando la rodada para el duelo local.</Text>
         </View>
       </Screen>
     );

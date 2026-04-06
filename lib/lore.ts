@@ -5,6 +5,7 @@ export const GAME_TAGLINE = "Fantasia gaucha, fortines y supersticion en la fron
 export const CASTLE_LABEL = "Fortin";
 export const GOLD_LABEL = "Plata";
 export const RELIC_LABEL = "Poncho de leyenda";
+export const DEFAULT_PLAYER_NAME = "Juli";
 
 const warriorNames: Record<string, string> = {
   Mago: "Curandero",
@@ -27,8 +28,44 @@ const specialNames: Record<string, string> = {
   Dragon: "Lobizon",
 };
 
+const shortFallbackNames = {
+  player: "Juli",
+  rival: "Tano",
+  host: "Mora",
+};
+
 export function loreGameDescription() {
   return `${GAME_BRAND}: estrategia de cartas en una frontera criolla, entre fortines, plata, malones y criaturas de la noche.`;
+}
+
+export function cpuDisplayName(difficulty: string) {
+  switch (difficulty) {
+    case "recluta":
+      return "Tano";
+    case "capitan":
+      return "Mati";
+    case "general":
+      return "Lucho";
+    default:
+      return "Moro";
+  }
+}
+
+export function displayPlayerName(
+  value?: string | null,
+  fallback: keyof typeof shortFallbackNames = "player",
+) {
+  const base = value?.trim();
+  if (!base) {
+    return shortFallbackNames[fallback];
+  }
+
+  const first = base.split(/\s+/)[0] ?? base;
+  if (first.length <= 12) {
+    return first;
+  }
+
+  return `${first.slice(0, 11)}`.trim();
 }
 
 export function displayWarriorName(name: string) {

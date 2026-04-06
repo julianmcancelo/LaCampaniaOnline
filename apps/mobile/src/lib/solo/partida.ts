@@ -1,3 +1,4 @@
+import { cpuDisplayName, DEFAULT_PLAYER_NAME } from "../../../../../lib/lore";
 import { applyMatchBattleAction } from "../../../../../motor/acciones/indice";
 import { objetivoBatallas } from "../../../../../motor/constantes";
 import { crearBatalla } from "../../../../../motor/mazo";
@@ -17,23 +18,14 @@ function crearJugadorLocal(playerId: string, displayName: string, isHost: boolea
 }
 
 export function nombreCpu(dificultad: DificultadCpu): string {
-  switch (dificultad) {
-    case "recluta":
-      return "CPU Recluta";
-    case "capitan":
-      return "CPU Capitán";
-    case "general":
-      return "CPU General";
-    default:
-      return "CPU";
-  }
+  return cpuDisplayName(dificultad);
 }
 
 export function crearPartidaSolo(displayName: string, dificultad: DificultadCpu): EstadoSolo {
   const playerId = "humano";
   const cpuPlayerId = "cpu";
   const players: MatchPlayer[] = [
-    crearJugadorLocal(playerId, displayName.trim() || "Jugador", true),
+    crearJugadorLocal(playerId, displayName.trim() || DEFAULT_PLAYER_NAME, true),
     crearJugadorLocal(cpuPlayerId, nombreCpu(dificultad), false),
   ];
 

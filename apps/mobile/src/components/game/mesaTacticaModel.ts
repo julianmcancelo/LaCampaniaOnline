@@ -7,7 +7,7 @@ import type {
   PlayerBattleState,
   SpyView,
 } from "../../../../../motor/tipos";
-import { GOLD_LABEL, RELIC_LABEL, displaySpecialName } from "../../../../../lib/lore";
+import { GOLD_LABEL, RELIC_LABEL, displayPlayerName, displaySpecialName } from "../../../../../lib/lore";
 
 export interface ActionOption {
   label: string;
@@ -165,7 +165,7 @@ export function useMesaTacticaModel({
         .filter((ally) => ally.field.length < 5)
         .forEach((ally) => {
           list.push({
-            label: `Refuerzo ${ally.displayName}`,
+            label: `Refuerzo ${displayPlayerName(ally.displayName, "host")}`,
             action: { type: "SEND_REINFORCEMENT", payload: { cardId: selectedCard.id, allyPlayerId: ally.playerId } },
             tone: "secondary",
           });
@@ -205,7 +205,7 @@ export function useMesaTacticaModel({
           .filter((enemy) => enemy.castle.cards.length > 0)
           .forEach((enemy) => {
             list.push({
-              label: `Malon ${enemy.displayName}`,
+              label: `Malon ${displayPlayerName(enemy.displayName, "rival")}`,
               action: { type: "ATTACK_WITH_SIEGE", payload: { cardId: selectedCard.id, targetPlayerId: enemy.playerId } },
               tone: "secondary",
             });
@@ -217,11 +217,22 @@ export function useMesaTacticaModel({
 
     if (battleView.phase === "TURN_SABOTAGE") {
       if (selectedCard?.tipo === "especial" && selectedCard.especial === "Ladron") {
-        enemies.forEach((enemy) => list.push({ label: `Cuatrerear ${enemy.displayName}`, action: { type: "USE_THIEF", payload: { cardId: selectedCard.id, targetPlayerId: enemy.playerId } } }));
+        enemies.forEach((enemy) =>
+          list.push({
+            label: `Cuatrerear ${displayPlayerName(enemy.displayName, "rival")}`,
+            action: { type: "USE_THIEF", payload: { cardId: selectedCard.id, targetPlayerId: enemy.playerId } },
+          }),
+        );
       }
       if (selectedCard?.tipo === "especial" && selectedCard.especial === "Espia") {
         list.push({ label: "Rastrear mazo", action: { type: "USE_SPY", payload: { cardId: selectedCard.id, targetDeck: true } } });
-        enemies.forEach((enemy) => list.push({ label: `Rastrear ${enemy.displayName}`, action: { type: "USE_SPY", payload: { cardId: selectedCard.id, targetPlayerId: enemy.playerId } }, tone: "secondary" }));
+        enemies.forEach((enemy) =>
+          list.push({
+            label: `Rastrear ${displayPlayerName(enemy.displayName, "rival")}`,
+            action: { type: "USE_SPY", payload: { cardId: selectedCard.id, targetPlayerId: enemy.playerId } },
+            tone: "secondary",
+          }),
+        );
       }
       list.push({ label: "Pasar fase", action: { type: "ADVANCE_PHASE", payload: {} }, tone: "secondary" });
       return list;

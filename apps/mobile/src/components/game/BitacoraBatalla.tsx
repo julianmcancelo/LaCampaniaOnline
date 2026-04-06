@@ -17,7 +17,7 @@ export function BitacoraBatalla({ eventos, limit = 6, compact = false }: { event
       {visibles.map((evento, index) => (
         <View key={evento.id} style={[styles.item, compact ? styles.itemCompact : null, index === 0 ? styles.itemReciente : null]}>
           <View style={styles.header}>
-            <Text style={[styles.etiqueta, compact ? styles.etiquetaCompact : null]}>{index === 0 ? "Ultima accion" : "Registro"}</Text>
+            <Text style={[styles.etiqueta, compact ? styles.etiquetaCompact : null]}>{index === 0 ? "Ultima rueda" : "Fogon"}</Text>
             <Text style={[styles.hora, compact ? styles.horaCompact : null]}>{formatearHora(evento.createdAt)}</Text>
           </View>
           <Text style={[styles.texto, compact ? styles.textoCompact : null]}>{evento.text}</Text>
@@ -34,14 +34,14 @@ const styles = StyleSheet.create({
   item: {
     borderRadius: radius.md,
     padding: 10,
-    backgroundColor: "rgba(255,248,239,0.08)",
+    backgroundColor: "rgba(255,243,220,0.08)",
     borderWidth: 1,
-    borderColor: "rgba(212,160,23,0.1)",
+    borderColor: "rgba(198,140,70,0.14)",
     gap: 4,
   },
   itemReciente: {
     borderColor: palette.borderStrong,
-    backgroundColor: "rgba(212,160,23,0.1)",
+    backgroundColor: "rgba(198,140,70,0.12)",
   },
   itemCompact: {
     padding: 7,

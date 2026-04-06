@@ -1,6 +1,6 @@
 import { LinearGradient } from "expo-linear-gradient";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
-import { GAME_BRAND } from "../../../../../lib/lore";
+import { GAME_BRAND, displayPlayerName } from "../../../../../lib/lore";
 import { palette, radius } from "../../theme/tokens";
 import { ActionButton } from "../ui/ActionButton";
 import { BitacoraBatalla } from "./BitacoraBatalla";
@@ -47,7 +47,7 @@ export function MesaTacticaCelular(props: MesaTacticaProps & { variant: GameView
 
   return (
     <View style={styles.root}>
-      <LinearGradient colors={["#d8bf97", "#e8d5af", "#c9ab7e"]} style={styles.board}>
+      <LinearGradient colors={["#d4bb91", "#ead8b7", "#bb8750"]} style={styles.board}>
         <View style={styles.header}>
           <Text style={styles.title}>{GAME_BRAND}</Text>
           <View style={styles.headerActions}>
@@ -58,8 +58,8 @@ export function MesaTacticaCelular(props: MesaTacticaProps & { variant: GameView
         </View>
 
         <View style={styles.summaryRow}>
-          <TopChip label={`${rival?.displayName ?? "Rival"} ${rival?.cardCount ?? 0}`} />
-          <TopChip label={`${me.displayName} ${me.hand.length}`} />
+          <TopChip label={`${displayPlayerName(rival?.displayName, "rival")} ${rival?.cardCount ?? 0}`} />
+          <TopChip label={`${displayPlayerName(me.displayName)} ${me.hand.length}`} />
         </View>
 
         <View style={styles.compactPanel}>
@@ -72,7 +72,7 @@ export function MesaTacticaCelular(props: MesaTacticaProps & { variant: GameView
             units={rival?.field ?? []}
             selectedUnitId={selectedTargetUnitId}
             onUnitPress={(unit) => setSelectedTargetUnitId((current) => (current === unit.instanceId ? null : unit.instanceId))}
-            emptyLabel="Espacio"
+            emptyLabel="Hueco"
             variant={variant}
             showTitle={false}
           />
@@ -87,7 +87,7 @@ export function MesaTacticaCelular(props: MesaTacticaProps & { variant: GameView
             {prompt}
           </Text>
           <View style={styles.pileBox}>
-            <Text style={styles.pileLabel}>Rancho</Text>
+            <Text style={styles.pileLabel}>Descarte</Text>
             <Text style={styles.pileValue}>{battleView.discardCount}</Text>
           </View>
         </View>
@@ -98,7 +98,7 @@ export function MesaTacticaCelular(props: MesaTacticaProps & { variant: GameView
             units={me.field}
             selectedUnitId={selectedSourceUnitId}
             onUnitPress={(unit) => setSelectedSourceUnitId((current) => (current === unit.instanceId ? null : unit.instanceId))}
-            emptyLabel="Solta"
+            emptyLabel="Bajar"
             variant={variant}
             showTitle={false}
           />
@@ -110,7 +110,7 @@ export function MesaTacticaCelular(props: MesaTacticaProps & { variant: GameView
       </LinearGradient>
 
       <View style={[styles.footerPanel, compactLandscape ? styles.footerPanelLandscape : null]}>
-        <Text style={styles.panelTitle}>Jugada</Text>
+        <Text style={styles.panelTitle}>Orden</Text>
         <Text style={styles.smallCopy}>{prompt}</Text>
 
         {battleView.phase === "TURN_TRADE" && selectedCard?.tipo === "oro" ? (
@@ -139,7 +139,7 @@ export function MesaTacticaCelular(props: MesaTacticaProps & { variant: GameView
           {scorePlayers.map((player) => (
             <View key={player.playerId} style={styles.metaPill}>
               <Text numberOfLines={1} style={styles.metaPillText}>
-                {player.displayName}: {scoreByPlayer[player.playerId] ?? 0}
+                {displayPlayerName(player.displayName, player.playerId === me.playerId ? "player" : "rival")}: {scoreByPlayer[player.playerId] ?? 0}
               </Text>
             </View>
           ))}
@@ -178,7 +178,7 @@ const styles = StyleSheet.create({
     flex: 1,
     borderRadius: radius.xl,
     borderWidth: 1,
-    borderColor: "rgba(96,65,27,0.22)",
+    borderColor: "rgba(92,56,24,0.28)",
     paddingHorizontal: 8,
     paddingTop: 8,
     paddingBottom: 6,
@@ -206,12 +206,12 @@ const styles = StyleSheet.create({
     borderRadius: 999,
     paddingHorizontal: 7,
     paddingVertical: 4,
-    backgroundColor: "rgba(61,81,52,0.68)",
+    backgroundColor: "rgba(95,58,28,0.8)",
     borderWidth: 1,
-    borderColor: "rgba(109,92,51,0.3)",
+    borderColor: "rgba(241,201,139,0.28)",
   },
   chipText: {
-    color: "#f7e8bf",
+    color: "#f7e5c0",
     fontSize: 8,
     fontWeight: "800",
     textTransform: "uppercase",
@@ -223,16 +223,16 @@ const styles = StyleSheet.create({
   },
   compactPanel: {
     borderRadius: radius.md,
-    backgroundColor: "rgba(255,255,255,0.09)",
+    backgroundColor: "rgba(255,246,229,0.12)",
     borderWidth: 1,
-    borderColor: "rgba(128, 96, 46, 0.18)",
+    borderColor: "rgba(132,88,40,0.18)",
     padding: 5,
   },
   zone: {
     borderRadius: radius.lg,
     borderWidth: 1,
-    borderColor: "rgba(128, 96, 46, 0.18)",
-    backgroundColor: "rgba(255,255,255,0.12)",
+    borderColor: "rgba(132,88,40,0.18)",
+    backgroundColor: "rgba(255,246,229,0.16)",
     padding: 4,
   },
   centerRow: {
@@ -241,9 +241,9 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   pileBox: {
-    width: 38,
+    width: 50,
     borderRadius: radius.lg,
-    backgroundColor: "#56715d",
+    backgroundColor: "#6d4d31",
     paddingVertical: 7,
     alignItems: "center",
     justifyContent: "center",
@@ -261,20 +261,20 @@ const styles = StyleSheet.create({
   },
   promptText: {
     flex: 1,
-    color: "#745e38",
+    color: "#704825",
     fontSize: 10,
     fontWeight: "700",
   },
   handArea: {
     borderTopWidth: 1,
-    borderTopColor: "rgba(128, 96, 46, 0.18)",
+    borderTopColor: "rgba(128,96,46,0.18)",
     paddingTop: 4,
   },
   footerPanel: {
     borderRadius: radius.lg,
-    backgroundColor: "rgba(18, 35, 27, 0.92)",
+    backgroundColor: "rgba(28, 18, 12, 0.96)",
     borderWidth: 1,
-    borderColor: palette.border,
+    borderColor: "rgba(194,145,77,0.26)",
     padding: 8,
     gap: 6,
   },
@@ -323,7 +323,7 @@ const styles = StyleSheet.create({
     borderRadius: 999,
     paddingHorizontal: 8,
     paddingVertical: 5,
-    backgroundColor: "rgba(255,255,255,0.08)",
+    backgroundColor: "rgba(255,245,228,0.08)",
     borderWidth: 1,
     borderColor: palette.border,
   },

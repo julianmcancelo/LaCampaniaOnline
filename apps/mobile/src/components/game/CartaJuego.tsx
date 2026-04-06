@@ -406,11 +406,11 @@ const styles = StyleSheet.create({
   orb: {
     borderRadius: 999,
     borderWidth: 1,
-    borderColor: "rgba(118, 115, 143, 0.45)",
-    backgroundColor: "rgba(255,255,255,0.32)",
+    borderColor: "rgba(154, 116, 72, 0.4)",
+    backgroundColor: "rgba(255,250,241,0.36)",
   },
   title: {
-    color: "#58685f",
+    color: "#5d6146",
     fontWeight: "700",
     textAlign: "center",
   },

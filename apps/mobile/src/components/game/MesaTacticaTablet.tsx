@@ -1,6 +1,6 @@
 import { LinearGradient } from "expo-linear-gradient";
 import { StyleSheet, Text, View } from "react-native";
-import { CASTLE_LABEL, GAME_BRAND } from "../../../../../lib/lore";
+import { CASTLE_LABEL, GAME_BRAND, displayPlayerName } from "../../../../../lib/lore";
 import { palette, radius } from "../../theme/tokens";
 import { ActionButton } from "../ui/ActionButton";
 import { SectionCard } from "../ui/SectionCard";
@@ -56,7 +56,7 @@ export function MesaTacticaTablet(props: MesaTacticaProps) {
 
   return (
     <View style={styles.root}>
-      <LinearGradient colors={["#d8bf97", "#e8d5af", "#c9ab7e"]} style={styles.board}>
+      <LinearGradient colors={["#d4bb91", "#ead8b7", "#bb8750"]} style={styles.board}>
         <View style={styles.header}>
           <Text style={styles.title}>{GAME_BRAND}</Text>
           <View style={styles.headerRight}>
@@ -70,7 +70,11 @@ export function MesaTacticaTablet(props: MesaTacticaProps) {
           </View>
         </View>
 
-        <BarraJugador name={rival?.displayName ?? "Rival"} cards={rival?.cardCount ?? 0} active={battleView.activePlayerId === rival?.playerId} />
+        <BarraJugador
+          name={displayPlayerName(rival?.displayName, "rival")}
+          cards={rival?.cardCount ?? 0}
+          active={battleView.activePlayerId === rival?.playerId}
+        />
 
         <View style={styles.zone}>
           <TiraUnidades
@@ -78,7 +82,7 @@ export function MesaTacticaTablet(props: MesaTacticaProps) {
             units={rival?.field ?? []}
             selectedUnitId={selectedTargetUnitId}
             onUnitPress={(unit) => setSelectedTargetUnitId((current) => (current === unit.instanceId ? null : unit.instanceId))}
-            emptyLabel="Espacio"
+            emptyLabel="Hueco"
             variant="tabletLandscape"
             showTitle={false}
           />
@@ -95,7 +99,7 @@ export function MesaTacticaTablet(props: MesaTacticaProps) {
             </Text>
           </View>
           <View style={styles.pileBox}>
-            <Text style={styles.pileLabel}>Rancho</Text>
+            <Text style={styles.pileLabel}>Descarte</Text>
             <Text style={styles.pileValue}>{battleView.discardCount}</Text>
           </View>
         </View>
@@ -106,13 +110,13 @@ export function MesaTacticaTablet(props: MesaTacticaProps) {
             units={me.field}
             selectedUnitId={selectedSourceUnitId}
             onUnitPress={(unit) => setSelectedSourceUnitId((current) => (current === unit.instanceId ? null : unit.instanceId))}
-            emptyLabel="Solta"
+            emptyLabel="Bajar"
             variant="tabletLandscape"
             showTitle={false}
           />
         </View>
 
-        <BarraJugador name={me.displayName} cards={me.hand.length} active={battleView.activePlayerId === me.playerId} />
+        <BarraJugador name={displayPlayerName(me.displayName)} cards={me.hand.length} active={battleView.activePlayerId === me.playerId} />
 
         <View style={styles.handBox}>
           <View style={styles.handInner}>
@@ -122,7 +126,7 @@ export function MesaTacticaTablet(props: MesaTacticaProps) {
       </LinearGradient>
 
       <View style={styles.sidebar}>
-        <SectionCard eyebrow="Accion" title="Jugada" compact>
+        <SectionCard eyebrow="Rueda" title="Orden" compact>
           <Text style={styles.sideText}>{prompt}</Text>
           {battleView.phase === "TURN_TRADE" && selectedCard?.tipo === "oro" ? (
             <View style={styles.tradeRow}>
@@ -144,11 +148,11 @@ export function MesaTacticaTablet(props: MesaTacticaProps) {
           </View>
         </SectionCard>
 
-        <SectionCard eyebrow="Match" title="Marcador" compact>
+        <SectionCard eyebrow="Tanteador" title="Marca" compact>
           <View style={styles.stackTight}>
             {scorePlayers.map((player) => (
               <View key={player.playerId} style={styles.scoreRow}>
-                <Text style={styles.scoreName}>{player.displayName}</Text>
+                <Text style={styles.scoreName}>{displayPlayerName(player.displayName, player.playerId === me.playerId ? "player" : "rival")}</Text>
                 <Text style={styles.scoreValue}>{scoreByPlayer[player.playerId] ?? 0}</Text>
               </View>
             ))}
@@ -161,7 +165,7 @@ export function MesaTacticaTablet(props: MesaTacticaProps) {
 
         {spyView ? (
           <SectionCard eyebrow="Baqueano" title={spyView.targetLabel} compact>
-            <Text style={styles.sideText}>{spyView.cards.map((card) => card.nombre).join(" · ") || "Sin cartas visibles."}</Text>
+            <Text style={styles.sideText}>{spyView.cards.map((card) => card.nombre).join(" | ") || "Sin cartas visibles."}</Text>
           </SectionCard>
         ) : null}
 
@@ -171,7 +175,7 @@ export function MesaTacticaTablet(props: MesaTacticaProps) {
           </SectionCard>
         ) : null}
 
-        <SectionCard eyebrow="Bitacora" title="Ultimos movimientos" compact>
+        <SectionCard eyebrow="Fogon" title="Novedades" compact>
           <BitacoraBatalla eventos={battleView.log} limit={3} compact />
         </SectionCard>
       </View>
@@ -190,7 +194,7 @@ const styles = StyleSheet.create({
     flex: 1,
     borderRadius: radius.xl,
     borderWidth: 1,
-    borderColor: "rgba(96,65,27,0.22)",
+    borderColor: "rgba(92,56,24,0.28)",
     paddingHorizontal: 12,
     paddingTop: 8,
     paddingBottom: 8,
@@ -217,12 +221,12 @@ const styles = StyleSheet.create({
     borderRadius: 999,
     paddingHorizontal: 8,
     paddingVertical: 4,
-    backgroundColor: "rgba(61,81,52,0.68)",
+    backgroundColor: "rgba(95,58,28,0.8)",
     borderWidth: 1,
-    borderColor: "rgba(109,92,51,0.3)",
+    borderColor: "rgba(241,201,139,0.28)",
   },
   chipText: {
-    color: "#f7e8bf",
+    color: "#f7e5c0",
     fontSize: 8,
     fontWeight: "800",
     textTransform: "uppercase",
@@ -235,13 +239,13 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: 8,
     borderRadius: radius.lg,
-    backgroundColor: "rgba(104,84,53,0.78)",
+    backgroundColor: "rgba(103,61,31,0.8)",
     paddingHorizontal: 8,
     paddingVertical: 4,
   },
   playerBarActive: {
-    shadowColor: "#92dd66",
-    shadowOpacity: 0.24,
+    shadowColor: "#f0c77e",
+    shadowOpacity: 0.28,
     shadowRadius: 10,
     shadowOffset: { width: 0, height: 2 },
   },
@@ -249,12 +253,12 @@ const styles = StyleSheet.create({
     width: 24,
     height: 24,
     borderRadius: 8,
-    backgroundColor: "#fbf4e8",
+    backgroundColor: "#f7ecd9",
     alignItems: "center",
     justifyContent: "center",
   },
   playerBadgeText: {
-    color: "#5b4322",
+    color: "#5d3818",
     fontSize: 12,
     fontWeight: "800",
   },
@@ -263,26 +267,26 @@ const styles = StyleSheet.create({
     gap: 3,
   },
   playerName: {
-    color: "#fff3d8",
+    color: "#fff2d6",
     fontSize: 13,
     fontWeight: "700",
   },
   playerTrack: {
     height: 5,
     borderRadius: 999,
-    backgroundColor: "rgba(255,255,255,0.22)",
+    backgroundColor: "rgba(252,240,219,0.18)",
     overflow: "hidden",
   },
   playerTrackFill: {
     width: "55%",
     height: "100%",
-    backgroundColor: "#6fe06b",
+    backgroundColor: "#7dcc72",
   },
   zone: {
     borderRadius: radius.lg,
     borderWidth: 1,
-    borderColor: "rgba(128, 96, 46, 0.2)",
-    backgroundColor: "rgba(255,255,255,0.12)",
+    borderColor: "rgba(132,88,40,0.22)",
+    backgroundColor: "rgba(255,246,229,0.16)",
     padding: 5,
   },
   centerRow: {
@@ -291,9 +295,9 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   pileBox: {
-    width: 38,
+    width: 50,
     borderRadius: radius.lg,
-    backgroundColor: "#56715d",
+    backgroundColor: "#6d4d31",
     paddingVertical: 7,
     alignItems: "center",
     justifyContent: "center",
@@ -314,20 +318,20 @@ const styles = StyleSheet.create({
     minHeight: 28,
     borderRadius: 999,
     borderWidth: 1,
-    borderColor: "rgba(145, 116, 60, 0.24)",
-    backgroundColor: "rgba(255,255,255,0.14)",
+    borderColor: "rgba(139,96,48,0.28)",
+    backgroundColor: "rgba(255,248,233,0.18)",
     alignItems: "center",
     justifyContent: "center",
     paddingHorizontal: 10,
   },
   promptText: {
-    color: "#745e38",
+    color: "#704825",
     fontSize: 10,
     fontWeight: "700",
   },
   handBox: {
     borderTopWidth: 1,
-    borderTopColor: "rgba(128, 96, 46, 0.2)",
+    borderTopColor: "rgba(128,96,46,0.2)",
     paddingTop: 4,
     flexGrow: 1,
     justifyContent: "center",
