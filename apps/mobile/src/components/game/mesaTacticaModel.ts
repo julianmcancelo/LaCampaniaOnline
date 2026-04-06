@@ -7,6 +7,7 @@ import type {
   PlayerBattleState,
   SpyView,
 } from "../../../../../motor/tipos";
+import { GOLD_LABEL, RELIC_LABEL, displaySpecialName } from "../../../../../lib/lore";
 
 export interface ActionOption {
   label: string;
@@ -17,14 +18,14 @@ export interface ActionOption {
 export const phaseTitle: Record<string, string> = {
   BATTLE_INITIATIVE: "Iniciativa",
   INITIAL_DEPLOY: "Despliegue",
-  TURN_DRAW: "Tomar",
-  TURN_ATTACK: "Ataque",
+  TURN_DRAW: "Leva",
+  TURN_ATTACK: "Cruce",
   TURN_SABOTAGE: "Sabotaje",
-  TURN_TRADE: "Comercio",
-  TURN_BUILD: "Construir",
+  TURN_TRADE: "Trueque",
+  TURN_BUILD: "Fortin",
   TURN_END_CHECKS: "Cierre",
-  BATTLE_OVER: "Batalla terminada",
-  MATCH_OVER: "Match terminado",
+  BATTLE_OVER: "Ronda saldada",
+  MATCH_OVER: "Duelo resuelto",
 };
 
 export function isPlayableGuerrero(card: Carta) {
@@ -64,24 +65,24 @@ function phasePrompt(view: ClientBattleView, selectedCardIds: string[], sourceId
   const selectedTarget = findAnyUnit(view, targetId);
   switch (view.phase) {
     case "BATTLE_INITIATIVE":
-      return "Todos tiran un dado. El mayor inicia.";
+      return "Todos tiran un dado. El mayor arranca la rodada.";
     case "INITIAL_DEPLOY":
-      return "Selecciona guerreros y confirma.";
+      return "Selecciona combatientes y confirma.";
     case "TURN_DRAW":
-      return "Toma carta o descarta si tu mano está llena.";
+      return "Leva una carta o descarta si la mano esta llena.";
     case "TURN_ATTACK":
-      if (!selectedSource) return "Toca un guerrero propio.";
-      if (!selectedCard) return "Ahora elige arma o poder.";
-      if (!selectedTarget) return "Por último elige objetivo.";
+      if (!selectedSource) return "Toca un paisano propio.";
+      if (!selectedCard) return "Ahora elige arma o coraje.";
+      if (!selectedTarget) return "Por ultimo elige objetivo.";
       return "Jugada lista.";
     case "TURN_SABOTAGE":
-      return "Usa Ladrón o Espía.";
+      return "Usa Cuatrero o Baqueano.";
     case "TURN_TRADE":
-      return "Selecciona oro o cartas para trueque.";
+      return `Selecciona ${GOLD_LABEL.toLowerCase()} o cartas para trueque.`;
     case "TURN_BUILD":
-      return "Inicia reliquia o agrega oro.";
+      return `Inicia ${RELIC_LABEL.toLowerCase()} o agrega ${GOLD_LABEL.toLowerCase()}.`;
     case "TURN_END_CHECKS":
-      return "Cierra el turno.";
+      return "Cierra la rodada.";
     default:
       return "Sigue el estado actual de la batalla.";
   }
@@ -152,7 +153,7 @@ export function useMesaTacticaModel({
         const card = findCard(me.hand, id);
         return card ? isPlayableGuerrero(card) : false;
       });
-      if (ids.length > 0) list.push({ label: `Desplegar ${ids.length}`, action: { type: "INITIAL_DEPLOY", payload: { cardIds: ids } } });
+      if (ids.length > 0) list.push({ label: `Bajar ${ids.length}`, action: { type: "INITIAL_DEPLOY", payload: { cardIds: ids } } });
       if (me.field.length > 0) list.push({ label: "Confirmar", action: { type: "CONFIRM_INITIAL_DEPLOY", payload: {} }, tone: "secondary" });
       return list;
     }
@@ -173,9 +174,9 @@ export function useMesaTacticaModel({
 
     if (battleView.phase === "TURN_DRAW") {
       if (me.hand.length >= 7) {
-        if (selectedCard) list.push({ label: "Descartar y tomar", action: { type: "DISCARD_ONE_FOR_DRAW", payload: { cardId: selectedCard.id } } });
+        if (selectedCard) list.push({ label: "Descartar y levar", action: { type: "DISCARD_ONE_FOR_DRAW", payload: { cardId: selectedCard.id } } });
       } else {
-        list.push({ label: "Tomar carta", action: { type: "DRAW_CARD", payload: {} } });
+        list.push({ label: "Levar carta", action: { type: "DRAW_CARD", payload: {} } });
       }
       return list;
     }
@@ -192,7 +193,7 @@ export function useMesaTacticaModel({
       }
       if (selectedCard?.tipo === "especial" && selectedCard.especial === "Poder" && selectedSource && selectedTarget) {
         list.push({
-          label: "Usar poder",
+          label: `Usar ${displaySpecialName("Poder")}`,
           action: {
             type: "USE_POWER_CARD",
             payload: { cardId: selectedCard.id, sourceUnitId: selectedSource.instanceId, targetUnitId: selectedTarget.unit.instanceId },
@@ -204,7 +205,7 @@ export function useMesaTacticaModel({
           .filter((enemy) => enemy.castle.cards.length > 0)
           .forEach((enemy) => {
             list.push({
-              label: `Asedio ${enemy.displayName}`,
+              label: `Malon ${enemy.displayName}`,
               action: { type: "ATTACK_WITH_SIEGE", payload: { cardId: selectedCard.id, targetPlayerId: enemy.playerId } },
               tone: "secondary",
             });
@@ -216,11 +217,11 @@ export function useMesaTacticaModel({
 
     if (battleView.phase === "TURN_SABOTAGE") {
       if (selectedCard?.tipo === "especial" && selectedCard.especial === "Ladron") {
-        enemies.forEach((enemy) => list.push({ label: `Robar ${enemy.displayName}`, action: { type: "USE_THIEF", payload: { cardId: selectedCard.id, targetPlayerId: enemy.playerId } } }));
+        enemies.forEach((enemy) => list.push({ label: `Cuatrerear ${enemy.displayName}`, action: { type: "USE_THIEF", payload: { cardId: selectedCard.id, targetPlayerId: enemy.playerId } } }));
       }
       if (selectedCard?.tipo === "especial" && selectedCard.especial === "Espia") {
-        list.push({ label: "Espiar mazo", action: { type: "USE_SPY", payload: { cardId: selectedCard.id, targetDeck: true } } });
-        enemies.forEach((enemy) => list.push({ label: `Espiar ${enemy.displayName}`, action: { type: "USE_SPY", payload: { cardId: selectedCard.id, targetPlayerId: enemy.playerId } }, tone: "secondary" }));
+        list.push({ label: "Rastrear mazo", action: { type: "USE_SPY", payload: { cardId: selectedCard.id, targetDeck: true } } });
+        enemies.forEach((enemy) => list.push({ label: `Rastrear ${enemy.displayName}`, action: { type: "USE_SPY", payload: { cardId: selectedCard.id, targetPlayerId: enemy.playerId } }, tone: "secondary" }));
       }
       list.push({ label: "Pasar fase", action: { type: "ADVANCE_PHASE", payload: {} }, tone: "secondary" });
       return list;
@@ -229,7 +230,7 @@ export function useMesaTacticaModel({
     if (battleView.phase === "TURN_TRADE") {
       if (selectedCard?.tipo === "oro") {
         const max = Math.max(1, Math.floor(selectedCard.valor / 2));
-        list.push({ label: `Comprar ${tradeAmount}/${max}`, action: { type: "TRADE_WITH_GOLD", payload: { goldCardId: selectedCard.id, amountToDraw: Math.min(tradeAmount, max) } } });
+        list.push({ label: `Cambiar ${tradeAmount}/${max}`, action: { type: "TRADE_WITH_GOLD", payload: { goldCardId: selectedCard.id, amountToDraw: Math.min(tradeAmount, max) } } });
       }
       if (selectedCardIds.length === 3 || selectedCardIds.length === 6) {
         list.push({ label: `Trueque ${selectedCardIds.length / 3}`, action: { type: "TRADE_BARTER", payload: { paymentCardIds: selectedCardIds, amountToDraw: selectedCardIds.length === 3 ? 1 : 2 } } });
@@ -240,10 +241,10 @@ export function useMesaTacticaModel({
 
     if (battleView.phase === "TURN_BUILD") {
       if (selectedCard && !me.castle.reliquia && valueOf(selectedCard) === 1 && (selectedCard.tipo === "oro" || selectedCard.tipo === "arma")) {
-        list.push({ label: "Usar reliquia", action: { type: "BUILD_RELIC", payload: { cardId: selectedCard.id } } });
+        list.push({ label: `Usar ${RELIC_LABEL}`, action: { type: "BUILD_RELIC", payload: { cardId: selectedCard.id } } });
       }
       if (selectedCard?.tipo === "oro" && me.castle.reliquia) {
-        list.push({ label: "Agregar oro", action: { type: "BUILD_CASTLE_CARD", payload: { cardId: selectedCard.id } } });
+        list.push({ label: `Agregar ${GOLD_LABEL.toLowerCase()}`, action: { type: "BUILD_CASTLE_CARD", payload: { cardId: selectedCard.id } } });
       }
       list.push({ label: "Pasar fase", action: { type: "ADVANCE_PHASE", payload: {} }, tone: "secondary" });
       return list;

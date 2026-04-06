@@ -11,6 +11,8 @@ Release candidata para pruebas cerradas de invitaciones online y validación con
 - panel de compartir en sala con copiar enlace, copiar código, compartir y mostrar QR
 - app links Android para `https://la-campania.vercel.app/invitar/...`
 - mejoras de flujo online mobile para entrar a sala desde enlace y validar disponibilidad
+- nuevo branding visible de `Sangre y Plata`
+- logo gaucho aplicado al acceso y a los assets principales de la app
 
 ### Web y backend
 - nueva landing pública de invitación en `/invitar/[roomId]`

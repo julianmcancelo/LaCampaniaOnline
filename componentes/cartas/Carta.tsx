@@ -1,6 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
+import { GOLD_LABEL, displayCardType, displaySpecialName, displayWarriorName, displayWeaponName } from "../../lib/lore";
 import type { Carta, UnitInPlay } from "../../motor/tipos";
 
 type CardLike = Carta | UnitInPlay;
@@ -22,18 +23,18 @@ function isUnit(card: CardLike): card is UnitInPlay {
 
 function titleFor(card: CardLike): string {
   if (isUnit(card)) {
-    return card.guerrero;
+    return displayWarriorName(card.guerrero);
   }
   if (card.tipo === "guerrero") {
-    return card.guerrero;
+    return displayWarriorName(card.guerrero);
   }
   if (card.tipo === "arma") {
-    return `${card.arma} ${card.valor}`;
+    return `${displayWeaponName(card.arma)} ${card.valor}`;
   }
   if (card.tipo === "oro") {
-    return `Oro ${card.valor}`;
+    return `${GOLD_LABEL} ${card.valor}`;
   }
-  return card.especial;
+  return displaySpecialName(card.especial);
 }
 
 function subtitleFor(card: CardLike): string {
@@ -42,11 +43,11 @@ function subtitleFor(card: CardLike): string {
   }
   switch (card.tipo) {
     case "guerrero":
-      return "Guerrero";
+      return "Combatiente";
     case "arma":
       return "Arma";
     case "oro":
-      return "Castillo / compra";
+      return "Fortin / compra";
     case "especial":
       return "Especial";
     default:
@@ -57,12 +58,12 @@ function subtitleFor(card: CardLike): string {
 function secondaryTextFor(card: CardLike): string | null {
   if (isUnit(card)) {
     if (card.shield) {
-      return `Escudo ${card.shield.remaining}/5`;
+      return `Recio ${card.shield.remaining}/5`;
     }
     if (card.damageMarks.length > 0) {
-      return `Daño acumulado ${card.damageTaken}`;
+      return `Danio acumulado ${card.damageTaken}`;
     }
-    return "Lista para combatir";
+    return "Lista para pelear";
   }
   switch (card.tipo) {
     case "guerrero":
@@ -70,7 +71,7 @@ function secondaryTextFor(card: CardLike): string | null {
     case "arma":
       return "Equipala sobre una unidad";
     case "oro":
-      return "Usala para comprar o construir";
+      return "Usala para comprar o levantar fortin";
     case "especial":
       return "Accion especial";
     default:
@@ -109,7 +110,7 @@ export default function CartaComponente({
   onDragEnd,
 }: CardProps) {
   const tone = toneFor(carta);
-  const typeLabel = isUnit(carta) ? "unidad" : carta.tipo;
+  const typeLabel = isUnit(carta) ? "unidad" : displayCardType(carta);
   const secondaryText = secondaryTextFor(carta);
   const statusLabel = interactionHint ?? (draggable ? "Mover" : selected ? "Lista" : null);
 
@@ -132,16 +133,8 @@ export default function CartaComponente({
           : "0 14px 26px rgba(0,0,0,0.2)",
       }}
     >
-      <div
-        aria-hidden="true"
-        className="pointer-events-none absolute inset-[6px] rounded-[16px] border"
-        style={{ borderColor: `${tone.accent}55` }}
-      />
-      <div
-        aria-hidden="true"
-        className="pointer-events-none absolute inset-[12px] rounded-[12px] border"
-        style={{ borderColor: `${tone.accent}33` }}
-      />
+      <div aria-hidden="true" className="pointer-events-none absolute inset-[6px] rounded-[16px] border" style={{ borderColor: `${tone.accent}55` }} />
+      <div aria-hidden="true" className="pointer-events-none absolute inset-[12px] rounded-[12px] border" style={{ borderColor: `${tone.accent}33` }} />
       <div className="relative mb-1.5 flex items-start justify-between gap-1.5">
         <div className="text-[9px] uppercase tracking-[0.1em]" style={{ color: tone.accent }}>
           {typeLabel}
@@ -168,16 +161,8 @@ export default function CartaComponente({
           fontFamily: "'Cinzel Decorative', Georgia, serif",
         }}
       >
-        <div
-          aria-hidden="true"
-          className="absolute left-1/2 top-2 h-4 w-4 -translate-x-1/2 rounded-full border"
-          style={{ borderColor: `${tone.accent}88`, background: "rgba(255,255,255,0.4)" }}
-        />
-        <div
-          aria-hidden="true"
-          className="absolute bottom-2 left-1/2 h-4 w-4 -translate-x-1/2 rounded-full border"
-          style={{ borderColor: `${tone.accent}88`, background: "rgba(255,255,255,0.28)" }}
-        />
+        <div aria-hidden="true" className="absolute left-1/2 top-2 h-4 w-4 -translate-x-1/2 rounded-full border" style={{ borderColor: `${tone.accent}88`, background: "rgba(255,255,255,0.4)" }} />
+        <div aria-hidden="true" className="absolute bottom-2 left-1/2 h-4 w-4 -translate-x-1/2 rounded-full border" style={{ borderColor: `${tone.accent}88`, background: "rgba(255,255,255,0.28)" }} />
         {titleFor(carta)}
       </div>
       <div className="relative text-[9px] uppercase tracking-[0.05em]" style={{ color: tone.accent }}>

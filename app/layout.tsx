@@ -1,18 +1,13 @@
-/**
- * layout.tsx — Layout raíz de La Campaña Online.
- * Carga las fuentes medievales de Google Fonts y aplica el fondo global.
- */
-
 import type { Metadata } from "next";
+import { GAME_BRAND, loreGameDescription } from "../lib/lore";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "La Campaña — Juego Online",
-  description:
-    "El juego estratégico de cartas argentino, ahora en línea. Reclutá guerreros, combatí y dominá el campo de batalla.",
+  title: `${GAME_BRAND} — Juego Online`,
+  description: loreGameDescription(),
   openGraph: {
-    title: "La Campaña — Juego Online",
-    description: "El juego estratégico de La Campaña, ahora online.",
+    title: `${GAME_BRAND} — Juego Online`,
+    description: loreGameDescription(),
     locale: "es_AR",
   },
 };
@@ -25,7 +20,6 @@ export default function LayoutRaiz({
   return (
     <html lang="es">
       <head>
-        {/* Fuentes medievales: Cinzel (texto cuerpo) y Cinzel Decorative (títulos) */}
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link

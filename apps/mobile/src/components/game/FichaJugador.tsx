@@ -1,5 +1,6 @@
 import { StyleSheet, Text, View } from "react-native";
 import type { OpponentBattleView, PlayerBattleState } from "../../../../../motor/tipos";
+import { CASTLE_LABEL } from "../../../../../lib/lore";
 import { palette, radius, spacing } from "../../theme/tokens";
 
 type Participante = PlayerBattleState | OpponentBattleView;
@@ -25,7 +26,7 @@ export function FichaJugador({
             {jugador.displayName}
             {propio ? " · Vos" : ""}
           </Text>
-          <Text style={styles.estadoBatalla}>{jugador.eliminated ? "Eliminado" : "En batalla"}</Text>
+          <Text style={styles.estadoBatalla}>{jugador.eliminated ? "Caido" : "En la rodada"}</Text>
         </View>
         <Text style={[styles.estadoConexion, jugador.connected ? styles.conectado : styles.desconectado]}>
           {jugador.connected ? "Online" : "Offline"}
@@ -42,7 +43,7 @@ export function FichaJugador({
           <Text style={styles.metricValue}>{esPropio(jugador) ? jugador.hand.length : jugador.cardCount}</Text>
         </View>
         <View style={styles.metric}>
-          <Text style={styles.metricLabel}>Castillo</Text>
+          <Text style={styles.metricLabel}>{CASTLE_LABEL}</Text>
           <Text style={styles.metricValue}>
             {jugador.castle.oroConstruido}/{jugador.castle.objetivo}
           </Text>

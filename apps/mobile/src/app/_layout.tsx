@@ -4,6 +4,7 @@ import { useEffect, type ReactNode } from "react";
 import { ActivityIndicator, StyleSheet, Text, View } from "react-native";
 import * as Device from "expo-device";
 import * as ScreenOrientation from "expo-screen-orientation";
+import { GAME_BRAND } from "../../../../lib/lore";
 import { useSocketBootstrap } from "../hooks/useSocketBootstrap";
 import { useProfileStore } from "../store/profile-store";
 import { palette } from "../theme/tokens";
@@ -45,8 +46,8 @@ function BootGate({ children }: { children: ReactNode }) {
     return (
       <View style={styles.boot}>
         <ActivityIndicator color={palette.goldSoft} size="large" />
-        <Text style={styles.bootTitle}>La Campaña</Text>
-        <Text style={styles.bootCopy}>Preparando tu perfil y la mesa móvil.</Text>
+        <Text style={styles.bootTitle}>{GAME_BRAND}</Text>
+        <Text style={styles.bootCopy}>Preparando tu perfil y la rueda movil.</Text>
       </View>
     );
   }

@@ -1,5 +1,6 @@
 import { LinearGradient } from "expo-linear-gradient";
 import { StyleSheet, Text, View } from "react-native";
+import { CASTLE_LABEL, GAME_BRAND } from "../../../../../lib/lore";
 import { palette, radius } from "../../theme/tokens";
 import { ActionButton } from "../ui/ActionButton";
 import { SectionCard } from "../ui/SectionCard";
@@ -57,7 +58,7 @@ export function MesaTacticaTablet(props: MesaTacticaProps) {
     <View style={styles.root}>
       <LinearGradient colors={["#d8bf97", "#e8d5af", "#c9ab7e"]} style={styles.board}>
         <View style={styles.header}>
-          <Text style={styles.title}>La Campaña</Text>
+          <Text style={styles.title}>{GAME_BRAND}</Text>
           <View style={styles.headerRight}>
             <View style={styles.chip}>
               <Text style={styles.chipText}>{phaseTitle[battleView.phase] ?? battleView.phase}</Text>
@@ -69,11 +70,7 @@ export function MesaTacticaTablet(props: MesaTacticaProps) {
           </View>
         </View>
 
-        <BarraJugador
-          name={rival?.displayName ?? "Rival"}
-          cards={rival?.cardCount ?? 0}
-          active={battleView.activePlayerId === rival?.playerId}
-        />
+        <BarraJugador name={rival?.displayName ?? "Rival"} cards={rival?.cardCount ?? 0} active={battleView.activePlayerId === rival?.playerId} />
 
         <View style={styles.zone}>
           <TiraUnidades
@@ -98,7 +95,7 @@ export function MesaTacticaTablet(props: MesaTacticaProps) {
             </Text>
           </View>
           <View style={styles.pileBox}>
-            <Text style={styles.pileLabel}>Desc</Text>
+            <Text style={styles.pileLabel}>Rancho</Text>
             <Text style={styles.pileValue}>{battleView.discardCount}</Text>
           </View>
         </View>
@@ -109,7 +106,7 @@ export function MesaTacticaTablet(props: MesaTacticaProps) {
             units={me.field}
             selectedUnitId={selectedSourceUnitId}
             onUnitPress={(unit) => setSelectedSourceUnitId((current) => (current === unit.instanceId ? null : unit.instanceId))}
-            emptyLabel="Soltá"
+            emptyLabel="Solta"
             variant="tabletLandscape"
             showTitle={false}
           />
@@ -119,20 +116,13 @@ export function MesaTacticaTablet(props: MesaTacticaProps) {
 
         <View style={styles.handBox}>
           <View style={styles.handInner}>
-            <TiraCartas
-              title=""
-              cards={me.hand}
-              selectedCardIds={selectedCardIds}
-              onCardPress={toggleCard}
-              variant="tabletLandscape"
-              showTitle={false}
-            />
+            <TiraCartas title="" cards={me.hand} selectedCardIds={selectedCardIds} onCardPress={toggleCard} variant="tabletLandscape" showTitle={false} />
           </View>
         </View>
       </LinearGradient>
 
       <View style={styles.sidebar}>
-        <SectionCard eyebrow="Acción" title="Jugada" compact>
+        <SectionCard eyebrow="Accion" title="Jugada" compact>
           <Text style={styles.sideText}>{prompt}</Text>
           {battleView.phase === "TURN_TRADE" && selectedCard?.tipo === "oro" ? (
             <View style={styles.tradeRow}>
@@ -149,7 +139,7 @@ export function MesaTacticaTablet(props: MesaTacticaProps) {
                 <ActionButton key={`${item.label}-${index}`} label={item.label} onPress={() => execute(item.action)} tone={item.tone ?? "primary"} />
               ))
             ) : (
-              <Text style={styles.sideText}>Sin acción lista.</Text>
+              <Text style={styles.sideText}>Sin accion lista.</Text>
             )}
           </View>
         </SectionCard>
@@ -165,12 +155,12 @@ export function MesaTacticaTablet(props: MesaTacticaProps) {
           </View>
         </SectionCard>
 
-        <SectionCard eyebrow="Castillo" title="Progreso" compact>
+        <SectionCard eyebrow={CASTLE_LABEL} title="Progreso" compact>
           <CastleHud me={battleView.me} opponents={battleView.opponents} compact />
         </SectionCard>
 
         {spyView ? (
-          <SectionCard eyebrow="Espía" title={spyView.targetLabel} compact>
+          <SectionCard eyebrow="Baqueano" title={spyView.targetLabel} compact>
             <Text style={styles.sideText}>{spyView.cards.map((card) => card.nombre).join(" · ") || "Sin cartas visibles."}</Text>
           </SectionCard>
         ) : null}
@@ -181,7 +171,7 @@ export function MesaTacticaTablet(props: MesaTacticaProps) {
           </SectionCard>
         ) : null}
 
-        <SectionCard eyebrow="Bitácora" title="Últimos movimientos" compact>
+        <SectionCard eyebrow="Bitacora" title="Ultimos movimientos" compact>
           <BitacoraBatalla eventos={battleView.log} limit={3} compact />
         </SectionCard>
       </View>

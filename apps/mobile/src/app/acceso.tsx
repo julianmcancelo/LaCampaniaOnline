@@ -1,7 +1,8 @@
 import { router } from "expo-router";
 import { LinearGradient } from "expo-linear-gradient";
 import { useEffect, useState } from "react";
-import { Pressable, StyleSheet, Text, View, useWindowDimensions } from "react-native";
+import { Image, Pressable, StyleSheet, Text, View, useWindowDimensions } from "react-native";
+import { GAME_BRAND } from "../../../../lib/lore";
 import { ProfileAvatar } from "../components/ui/ProfileAvatar";
 import { Screen } from "../components/ui/Screen";
 import { getPendingInvite } from "../lib/invitaciones";
@@ -93,10 +94,11 @@ export default function PantallaAcceso() {
       <LinearGradient colors={["#07130f", "#10251c", "#0b1813"]} style={styles.root}>
         <View style={[styles.hero, compact ? styles.heroCompact : null]}>
           <View style={styles.brandColumn}>
-            <Text style={styles.eyebrow}>Acceso al reino</Text>
-            <Text style={styles.brand}>La Campaña</Text>
+            <Image source={require("../../../../public/logo-gaucho-puro.png")} style={styles.logo} resizeMode="contain" />
+            <Text style={styles.eyebrow}>Acceso a la frontera</Text>
+            <Text style={styles.brand}>{GAME_BRAND}</Text>
             <Text style={styles.copy}>
-              Entrá con Google para guardar tu identidad, tu foto, tus puntos y tu progreso. Si querés probar primero, podés usar
+              Entra con Google para guardar tu identidad, tu foto, tu plata y tu progreso. Si queres probar primero, podes usar
               modo invitado por hasta 4 partidas.
             </Text>
           </View>
@@ -106,17 +108,17 @@ export default function PantallaAcceso() {
               <View style={styles.identityRow}>
                 <ProfileAvatar
                   size={56}
-                  displayName={profile?.displayName || "Aventurero"}
+                  displayName={profile?.displayName || "Paisano"}
                   photoURL={profile?.photoURL}
                   avatarKind={profile?.avatarKind ?? "crest"}
                   crestId={profile?.crestId}
                 />
                 <View style={styles.identityText}>
-                  <Text style={styles.panelTitle}>{blockedGuest ? "Se terminó el modo invitado" : "Elegí cómo entrar"}</Text>
+                  <Text style={styles.panelTitle}>{blockedGuest ? "Se termino el modo invitado" : "Elegi como entrar"}</Text>
                   <Text style={styles.panelCopy}>
                     {blockedGuest
-                      ? "Ya usaste tus 4 partidas de prueba. Entrá con Google para seguir sin perder tu avance."
-                      : "Google es la opción recomendada. Invitado sirve para una prueba rápida."}
+                      ? "Ya usaste tus 4 partidas de prueba. Entra con Google para seguir sin perder tu avance."
+                      : "Google es la opcion recomendada. Invitado sirve para una rodada rapida."}
                   </Text>
                 </View>
               </View>
@@ -126,7 +128,7 @@ export default function PantallaAcceso() {
               <AccessButton
                 icon="G"
                 title={loadingGoogle ? "Abriendo Google..." : "Entrar con Google"}
-                subtitle="Sincroniza foto, nombre, estadísticas y puntos."
+                subtitle="Sincroniza foto, nombre, estadisticas y puntaje."
                 onPress={async () => {
                   setLoadingGoogle(true);
                   await signInWithGoogle();
@@ -151,7 +153,7 @@ export default function PantallaAcceso() {
 
             <View style={styles.metaRow}>
               <View style={styles.metaChip}>
-                <Text style={styles.metaLabel}>Puntos</Text>
+                <Text style={styles.metaLabel}>Puntaje</Text>
                 <Text style={styles.metaValue}>{profile?.progreso.puntos ?? 0}</Text>
               </View>
               <View style={styles.metaChip}>
@@ -190,6 +192,11 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     gap: 12,
     paddingHorizontal: 10,
+  },
+  logo: {
+    width: 124,
+    height: 124,
+    marginBottom: 4,
   },
   eyebrow: {
     color: palette.goldSoft,

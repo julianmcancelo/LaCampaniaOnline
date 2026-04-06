@@ -1,5 +1,6 @@
 import { StyleSheet, Text, View } from "react-native";
 import type { OpponentBattleView, PlayerBattleState } from "../../../../../motor/tipos";
+import { CASTLE_LABEL, RELIC_LABEL } from "../../../../../lib/lore";
 import { palette, radius } from "../../theme/tokens";
 
 export function CastleHud({
@@ -45,7 +46,9 @@ export function CastleHud({
           <Text style={[styles.progress, compact ? styles.progressCompact : null]}>
             {entry.progress}/{entry.goal}
           </Text>
-          <Text style={[styles.meta, compact ? styles.metaCompact : null]}>{entry.relic ? `R${entry.relic}` : "SR"} · -{entry.remaining}</Text>
+          <Text style={[styles.meta, compact ? styles.metaCompact : null]}>
+            {entry.relic ? `${RELIC_LABEL} ${entry.relic}` : `Sin ${RELIC_LABEL.toLowerCase()}`} · -{entry.remaining}
+          </Text>
         </View>
       ))}
     </View>

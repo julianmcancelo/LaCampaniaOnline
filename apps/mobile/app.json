@@ -1,14 +1,14 @@
 {
   "expo": {
-    "name": "La Campaña Mobile",
+    "name": "Sangre y Plata Mobile",
     "slug": "la-campania-mobile",
     "version": "0.0.2",
     "orientation": "default",
-    "icon": "./assets/images/icon.png",
+    "icon": "./assets/images/logo-gaucho-puro.png",
     "scheme": "lacampania",
     "userInterfaceStyle": "dark",
     "ios": {
-      "icon": "./assets/expo.icon"
+      "icon": "./assets/images/logo-gaucho-puro.png"
     },
     "android": {
       "googleServicesFile": "./android/app/google-services.json",
@@ -23,24 +23,21 @@
               "pathPrefix": "/invitar/"
             }
           ],
-          "category": [
-            "BROWSABLE",
-            "DEFAULT"
-          ]
+          "category": ["BROWSABLE", "DEFAULT"]
         }
       ],
       "adaptiveIcon": {
-        "backgroundColor": "#E6F4FE",
-        "foregroundImage": "./assets/images/android-icon-foreground.png",
+        "backgroundColor": "#08140f",
+        "foregroundImage": "./assets/images/logo-gaucho-puro.png",
         "backgroundImage": "./assets/images/android-icon-background.png",
-        "monochromeImage": "./assets/images/android-icon-monochrome.png"
+        "monochromeImage": "./assets/images/logo-gaucho-puro.png"
       },
       "predictiveBackGestureEnabled": false,
       "package": "com.jcancelo.lacampaniamobile"
     },
     "web": {
       "output": "static",
-      "favicon": "./assets/images/favicon.png"
+      "favicon": "./assets/images/logo-gaucho-puro.png"
     },
     "plugins": [
       "expo-router",
@@ -49,7 +46,7 @@
         {
           "backgroundColor": "#08140f",
           "android": {
-            "image": "./assets/images/splash-icon.png",
+            "image": "./assets/images/logo-gaucho-puro.png",
             "imageWidth": 76
           }
         }

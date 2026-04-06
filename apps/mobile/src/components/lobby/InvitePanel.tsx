@@ -2,6 +2,7 @@ import * as Clipboard from "expo-clipboard";
 import { useMemo, useState } from "react";
 import { Modal, Pressable, Share, StyleSheet, Text, View } from "react-native";
 import QRCode from "react-native-qrcode-svg";
+import { GAME_BRAND } from "../../../../../lib/lore";
 import { buildMobileInviteUrl } from "../../lib/invitaciones";
 import { palette, radius, spacing } from "../../theme/tokens";
 import { ActionButton } from "../ui/ActionButton";
@@ -26,8 +27,8 @@ export function InvitePanel({ roomId }: { roomId: string }) {
 
   async function shareInvite() {
     await Share.share({
-      title: "La Campaña",
-      message: `Sumate a mi sala de La Campaña: ${inviteUrl}`,
+      title: GAME_BRAND,
+      message: `Sumate a mi rueda en ${GAME_BRAND}: ${inviteUrl}`,
       url: inviteUrl,
     });
   }
@@ -36,7 +37,7 @@ export function InvitePanel({ roomId }: { roomId: string }) {
     <View style={styles.card}>
       <Text style={styles.eyebrow}>Invitacion</Text>
       <Text style={styles.title}>Invita por enlace o QR</Text>
-      <Text style={styles.copy}>Comparte este acceso directo. Si la app esta instalada, abrira la invitacion y validara la sala.</Text>
+      <Text style={styles.copy}>Comparte este acceso directo. Si la app esta instalada, abrira la invitacion y validara la rueda.</Text>
 
       <View style={styles.codeRow}>
         <View style={styles.codeBadge}>

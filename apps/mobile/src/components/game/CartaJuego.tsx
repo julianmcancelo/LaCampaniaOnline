@@ -2,31 +2,9 @@ import { LinearGradient } from "expo-linear-gradient";
 import { useEffect, useMemo, useRef } from "react";
 import { Animated, Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions } from "react-native";
 import type { Carta, UnitInPlay } from "../../../../../motor/tipos";
-import { palette, radius, spacing } from "../../theme/tokens";
+import { displayCardSubtitle, displayCardTitle, displayCardType, displayWarriorName } from "../../../../../lib/lore";
+import { palette, radius } from "../../theme/tokens";
 import { resolveGameViewport, type GameViewportMode } from "./viewport";
-
-function tituloCarta(card: Carta): string {
-  if (card.tipo === "guerrero") {
-    return card.guerrero;
-  }
-  if (card.tipo === "especial") {
-    return card.especial;
-  }
-  return card.nombre;
-}
-
-function subtituloCarta(card: Carta): string {
-  if (card.tipo === "arma") {
-    return `${card.arma} ${card.valor}`;
-  }
-  if (card.tipo === "oro") {
-    return `Oro ${card.valor}`;
-  }
-  if (card.tipo === "especial") {
-    return "Especial";
-  }
-  return "Guerrero";
-}
 
 function colorCarta(card: Carta): [string, string, string] {
   switch (card.tipo) {
@@ -113,15 +91,15 @@ export function CartaJuego({
         ]}
       >
         <View style={[styles.outerFrame, { padding: scale.framePadding, borderRadius: scale.frameRadius, gap: scale.innerGap }]}>
-          <Text style={[styles.kicker, { fontSize: scale.kickerSize }]}>{card.tipo.toUpperCase()}</Text>
+          <Text style={[styles.kicker, { fontSize: scale.kickerSize }]}>{displayCardType(card).toUpperCase()}</Text>
           <View style={[styles.illustration, { paddingHorizontal: scale.illustrationPadding, borderRadius: scale.illustrationRadius, gap: scale.illustrationGap }]}>
             <View style={[styles.orb, { width: scale.orbSize, height: scale.orbSize }]} />
             <Text style={[styles.title, { fontSize: scale.titleSize, lineHeight: scale.titleLineHeight }]} numberOfLines={2}>
-              {tituloCarta(card)}
+              {displayCardTitle(card)}
             </Text>
             <View style={[styles.orb, { width: scale.orbSize, height: scale.orbSize }]} />
           </View>
-          <Text style={[styles.meta, { fontSize: scale.metaSize, lineHeight: scale.metaLineHeight }]}>{subtituloCarta(card)}</Text>
+          <Text style={[styles.meta, { fontSize: scale.metaSize, lineHeight: scale.metaLineHeight }]}>{displayCardSubtitle(card)}</Text>
         </View>
       </LinearGradient>
     </AnimatedCardShell>
@@ -131,11 +109,7 @@ export function CartaJuego({
     return content;
   }
 
-  return (
-    <Pressable onPress={onPress} style={({ pressed }) => [pressed ? styles.pressed : null]}>
-      {content}
-    </Pressable>
-  );
+  return <Pressable onPress={onPress}>{content}</Pressable>;
 }
 
 export function UnidadJuego({
@@ -174,10 +148,10 @@ export function UnidadJuego({
         ]}
       >
         <View style={[styles.outerFrame, { padding: scale.framePadding, borderRadius: scale.frameRadius, gap: scale.innerGap }]}>
-          <Text style={[styles.kicker, { fontSize: scale.kickerSize }]}>UNIDAD</Text>
+          <Text style={[styles.kicker, { fontSize: scale.kickerSize }]}>PAISANO</Text>
           <View style={[styles.illustration, { paddingHorizontal: scale.illustrationPadding, borderRadius: scale.illustrationRadius, gap: scale.illustrationGap }]}>
             <View style={[styles.orb, { width: scale.orbSize, height: scale.orbSize }]} />
-            <Text style={[styles.title, { fontSize: scale.titleSize, lineHeight: scale.titleLineHeight }]}>{unit.guerrero}</Text>
+            <Text style={[styles.title, { fontSize: scale.titleSize, lineHeight: scale.titleLineHeight }]}>{displayWarriorName(unit.guerrero)}</Text>
             <View style={[styles.orb, { width: scale.orbSize, height: scale.orbSize }]} />
           </View>
           <View style={[styles.healthTrack, { height: scale.healthTrackHeight }]}>
@@ -186,7 +160,9 @@ export function UnidadJuego({
           <Text style={[styles.meta, { fontSize: scale.metaSize, lineHeight: scale.metaLineHeight }]}>
             Vida {vidaActual}/{unit.vidaMaxima}
           </Text>
-          <Text style={[styles.meta, { fontSize: scale.metaSize, lineHeight: scale.metaLineHeight }]}>{unit.shield ? `Escudo ${unit.shield.remaining}` : `Daño ${unit.damageTaken}`}</Text>
+          <Text style={[styles.meta, { fontSize: scale.metaSize, lineHeight: scale.metaLineHeight }]}>
+            {unit.shield ? `Recio ${unit.shield.remaining}` : `Danio ${unit.damageTaken}`}
+          </Text>
         </View>
       </LinearGradient>
     </AnimatedCardShell>
@@ -196,11 +172,7 @@ export function UnidadJuego({
     return content;
   }
 
-  return (
-    <Pressable onPress={onPress} style={({ pressed }) => [pressed ? styles.pressed : null]}>
-      {content}
-    </Pressable>
-  );
+  return <Pressable onPress={onPress}>{content}</Pressable>;
 }
 
 function SlotVacio({ label, variant }: { label: string; variant: GameViewportMode }) {
@@ -487,8 +459,5 @@ const styles = StyleSheet.create({
     shadowRadius: 14,
     shadowOffset: { width: 0, height: 6 },
     elevation: 4,
-  },
-  pressed: {
-    transform: [{ scale: 0.985 }],
   },
 });

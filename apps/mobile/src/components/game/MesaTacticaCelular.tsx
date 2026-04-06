@@ -1,5 +1,6 @@
 import { LinearGradient } from "expo-linear-gradient";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { GAME_BRAND } from "../../../../../lib/lore";
 import { palette, radius } from "../../theme/tokens";
 import { ActionButton } from "../ui/ActionButton";
 import { BitacoraBatalla } from "./BitacoraBatalla";
@@ -48,7 +49,7 @@ export function MesaTacticaCelular(props: MesaTacticaProps & { variant: GameView
     <View style={styles.root}>
       <LinearGradient colors={["#d8bf97", "#e8d5af", "#c9ab7e"]} style={styles.board}>
         <View style={styles.header}>
-          <Text style={styles.title}>La Campaña</Text>
+          <Text style={styles.title}>{GAME_BRAND}</Text>
           <View style={styles.headerActions}>
             <TopChip label={phaseTitle[battleView.phase] ?? battleView.phase} />
             <TopChip label={`T${battleView.currentTurn}`} />
@@ -86,7 +87,7 @@ export function MesaTacticaCelular(props: MesaTacticaProps & { variant: GameView
             {prompt}
           </Text>
           <View style={styles.pileBox}>
-            <Text style={styles.pileLabel}>Desc</Text>
+            <Text style={styles.pileLabel}>Rancho</Text>
             <Text style={styles.pileValue}>{battleView.discardCount}</Text>
           </View>
         </View>
@@ -97,7 +98,7 @@ export function MesaTacticaCelular(props: MesaTacticaProps & { variant: GameView
             units={me.field}
             selectedUnitId={selectedSourceUnitId}
             onUnitPress={(unit) => setSelectedSourceUnitId((current) => (current === unit.instanceId ? null : unit.instanceId))}
-            emptyLabel="Soltá"
+            emptyLabel="Solta"
             variant={variant}
             showTitle={false}
           />
@@ -130,7 +131,7 @@ export function MesaTacticaCelular(props: MesaTacticaProps & { variant: GameView
               </View>
             ))
           ) : (
-            <Text style={styles.smallCopy}>Sin acción lista.</Text>
+            <Text style={styles.smallCopy}>Sin accion lista.</Text>
           )}
         </View>
 
@@ -145,7 +146,7 @@ export function MesaTacticaCelular(props: MesaTacticaProps & { variant: GameView
           {spyView ? (
             <Pressable style={styles.metaPill}>
               <Text numberOfLines={1} style={styles.metaPillText}>
-                Espía: {spyView.targetLabel}
+                Baqueano: {spyView.targetLabel}
               </Text>
             </Pressable>
           ) : null}
