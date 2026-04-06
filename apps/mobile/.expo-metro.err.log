@@ -1,0 +1,21 @@
+C:\Users\jcanc\Documents\Mesa\apps\mobile\node_modules\expo\node_modules\@expo\cli\build\src\utils\errors.js:130
+    throw error;
+    ^
+
+Error: ENOENT: no such file or directory, watch 'C:\Users\jcanc\Documents\Mesa\apps\mobile\node_modules\react-native-reanimated\android\.cxx\Debug\5p416j36\arm64-v8a\CMakeFiles\CMakeTmp\CMakeFiles'
+    at FSWatcher.<computed> (node:internal/fs/watchers:316:19)
+    at Object.watch (node:fs:2537:36)
+    at FallbackWatcher.#watchdir (C:\Users\jcanc\Documents\Mesa\apps\mobile\node_modules\metro-file-map\src\watchers\FallbackWatcher.js:123:33)
+    at C:\Users\jcanc\Documents\Mesa\apps\mobile\node_modules\metro-file-map\src\watchers\FallbackWatcher.js:223:31
+    at Walker.<anonymous> (C:\Users\jcanc\Documents\Mesa\apps\mobile\node_modules\metro-file-map\src\watchers\FallbackWatcher.js:362:5)
+    at Walker.emit (node:events:508:28)
+    at C:\Users\jcanc\Documents\Mesa\apps\mobile\node_modules\walker\lib\walker.js:69:16
+    at FSReqCallback.oncomplete (node:fs:185:23) {
+  errno: -4058,
+  syscall: 'watch',
+  code: 'ENOENT',
+  path: 'C:\\Users\\jcanc\\Documents\\Mesa\\apps\\mobile\\node_modules\\react-native-reanimated\\android\\.cxx\\Debug\\5p416j36\\arm64-v8a\\CMakeFiles\\CMakeTmp\\CMakeFiles',
+  filename: 'C:\\Users\\jcanc\\Documents\\Mesa\\apps\\mobile\\node_modules\\react-native-reanimated\\android\\.cxx\\Debug\\5p416j36\\arm64-v8a\\CMakeFiles\\CMakeTmp\\CMakeFiles'
+}
+
+Node.js v24.14.0

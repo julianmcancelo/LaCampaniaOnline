@@ -324,7 +324,7 @@ export default function PaginaInicio() {
         {/* Contenido hero */}
         <motion.div
           className="relative z-10 text-center"
-          style={{ opacity: opHero, y: yHero, maxWidth: 860 }}
+          style={{ opacity: opHero, y: yHero, maxWidth: 980, width: "100%" }}
         >
           <motion.div
             initial={{ opacity: 0, y: 16 }}
@@ -337,13 +337,15 @@ export default function PaginaInicio() {
           <motion.h1
             style={{
               fontFamily: "'Cinzel Decorative', Georgia, serif",
-              fontSize: "clamp(3.2rem, 9vw, 7.5rem)",
+              fontSize: "clamp(3rem, 7.2vw, 6.1rem)",
               fontWeight: 900,
               color: "#f5d98a",
-              lineHeight: 1.0,
+              lineHeight: 0.96,
               textShadow:
                 "0 0 80px rgba(212,160,23,0.15), 0 4px 30px rgba(0,0,0,0.9)",
-              letterSpacing: "-0.01em",
+              letterSpacing: "-0.025em",
+              maxWidth: "10.5ch",
+              margin: "0 auto",
             }}
             initial={{ opacity: 0, y: 30, scale: 0.96 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
@@ -355,10 +357,10 @@ export default function PaginaInicio() {
           <motion.p
             style={{
               fontFamily: "'Cinzel Decorative', Georgia, serif",
-              fontSize: "clamp(1.1rem, 3vw, 1.7rem)",
+              fontSize: "clamp(1rem, 2.4vw, 1.45rem)",
               color: "rgba(212,160,23,0.7)",
-              marginTop: "0.4em",
-              letterSpacing: "0.35em",
+              marginTop: "0.55em",
+              letterSpacing: "0.26em",
               textTransform: "uppercase",
             }}
             initial={{ opacity: 0 }}
@@ -380,10 +382,10 @@ export default function PaginaInicio() {
           <motion.p
             style={{
               fontFamily: "'Cinzel', Georgia, serif",
-              fontSize: "clamp(0.95rem, 2vw, 1.1rem)",
+              fontSize: "clamp(0.95rem, 1.7vw, 1.05rem)",
               color: "#8a9e92",
-              lineHeight: 1.8,
-              maxWidth: 520,
+              lineHeight: 1.75,
+              maxWidth: 640,
               margin: "0 auto 2.5rem",
             }}
             initial={{ opacity: 0, y: 16 }}

@@ -5,10 +5,18 @@
   "scripts": {
     "dev": "ts-node --project tsconfig.server.json servidor/indice.ts",
     "build": "next build && tsc --project tsconfig.server.json",
-    "start": "NODE_ENV=production node dist/servidor/indice.js",
+    "build:backend": "tsc --project tsconfig.server.json",
+    "start": "node dist/servidor/indice.js",
+    "start:backend": "node dist/servidor/backend.js",
     "start:dev": "ts-node --project tsconfig.server.json servidor/indice.ts",
     "lint": "next lint",
-    "test": "ts-node --project tsconfig.server.json motor/run-tests.ts"
+    "test": "ts-node --project tsconfig.server.json motor/run-tests.ts",
+    "mobile:start": "npm --prefix apps/mobile run start",
+    "mobile:android": "npm --prefix apps/mobile run android",
+    "mobile:android:instalar": "cmd /c \"cd /d apps\\mobile\\android && gradlew.bat installDebug\"",
+    "mobile:android:abrir": "cmd /c \"%LOCALAPPDATA%\\Android\\Sdk\\platform-tools\\adb.exe shell am start -n com.anonymous.lacampaniamobile/.MainActivity\"",
+    "mobile:web": "npm --prefix apps/mobile run web",
+    "mobile:typecheck": "npm --prefix apps/mobile run typecheck"
   },
   "dependencies": {
     "@radix-ui/react-separator": "^1.1.8",

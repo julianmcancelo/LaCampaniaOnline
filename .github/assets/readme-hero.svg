@@ -1,0 +1,101 @@
+<svg width="1280" height="720" viewBox="0 0 1280 720" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="120" y1="40" x2="1160" y2="680" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#183629">
+        <animate attributeName="stop-color" values="#183629;#214737;#183629" dur="10s" repeatCount="indefinite"/>
+      </stop>
+      <stop offset="0.55" stop-color="#0D2318"/>
+      <stop offset="1" stop-color="#08130F"/>
+    </linearGradient>
+    <radialGradient id="goldGlow" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(954 163) rotate(136.102) scale(583.578 523.881)">
+      <stop stop-color="#F2D48D" stop-opacity="0.35"/>
+      <stop offset="1" stop-color="#F2D48D" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="board" x1="640" y1="154" x2="640" y2="586" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#F0E3CC"/>
+      <stop offset="1" stop-color="#DFC8A0"/>
+    </linearGradient>
+    <linearGradient id="accent" x1="846" y1="274" x2="1118" y2="522" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#F1D185"/>
+      <stop offset="1" stop-color="#A66A17"/>
+    </linearGradient>
+    <filter id="blur" x="-120" y="-120" width="1520" height="960" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+      <feGaussianBlur stdDeviation="60"/>
+    </filter>
+    <filter id="shadow" x="0" y="0" width="1280" height="720" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+      <feDropShadow dx="0" dy="18" stdDeviation="26" flood-color="#000000" flood-opacity="0.28"/>
+    </filter>
+    <pattern id="grain" width="120" height="120" patternUnits="userSpaceOnUse">
+      <path d="M0 28C35 16 66 15 120 36" stroke="#8E6B3A" stroke-opacity="0.08" stroke-width="2"/>
+      <path d="M-12 70C34 53 81 58 132 88" stroke="#7A5730" stroke-opacity="0.06" stroke-width="2"/>
+      <path d="M8 106C54 94 88 98 140 116" stroke="#A77A45" stroke-opacity="0.08" stroke-width="2"/>
+    </pattern>
+  </defs>
+
+  <rect width="1280" height="720" rx="32" fill="url(#bg)"/>
+  <rect width="1280" height="720" rx="32" fill="url(#grain)"/>
+  <g filter="url(#blur)">
+    <circle cx="1035" cy="168" r="188" fill="url(#goldGlow)">
+      <animate attributeName="cx" values="1035;1005;1035" dur="12s" repeatCount="indefinite"/>
+    </circle>
+  </g>
+
+  <rect x="74" y="72" width="1132" height="576" rx="28" stroke="rgba(242,212,141,0.15)" stroke-width="2"/>
+
+  <g opacity="0.9">
+    <text x="116" y="152" fill="#D7A52F" font-family="Georgia, serif" font-size="18" letter-spacing="7">ESTRATEGIA · TIEMPO REAL · MULTIJUGADOR</text>
+    <text x="116" y="248" fill="#F4E7CD" font-family="Georgia, serif" font-size="74" font-weight="700">LaCampaniaOnline</text>
+    <text x="116" y="310" fill="#BFAF95" font-family="Georgia, serif" font-size="26">La Campaña llevada a web con motor de reglas, salas y combate en vivo.</text>
+  </g>
+
+  <g filter="url(#shadow)">
+    <rect x="96" y="384" width="680" height="188" rx="30" fill="url(#board)"/>
+    <rect x="96" y="384" width="680" height="188" rx="30" stroke="#C69C4B" stroke-opacity="0.28" stroke-width="2"/>
+
+    <g opacity="0.95">
+      <rect x="134" y="418" width="186" height="120" rx="22" fill="#F8F1E5" stroke="#C5A46A" stroke-width="1.5"/>
+      <rect x="154" y="442" width="146" height="72" rx="18" fill="#E7EFEA" stroke="#6F8E7D" stroke-width="1.5"/>
+      <text x="181" y="483" fill="#557061" font-family="Georgia, serif" font-size="30" font-weight="700">Mago</text>
+      <text x="158" y="435" fill="#6F8E7D" font-family="Georgia, serif" font-size="12" letter-spacing="3">UNIDAD</text>
+    </g>
+
+    <g opacity="0.96">
+      <rect x="342" y="418" width="186" height="120" rx="22" fill="#F8F1E5" stroke="#C5A46A" stroke-width="1.5"/>
+      <rect x="362" y="442" width="146" height="72" rx="18" fill="#F0E7DA" stroke="#B9835D" stroke-width="1.5"/>
+      <text x="376" y="483" fill="#946244" font-family="Georgia, serif" font-size="30" font-weight="700">Caballero</text>
+      <text x="366" y="435" fill="#B9835D" font-family="Georgia, serif" font-size="12" letter-spacing="3">UNIDAD</text>
+    </g>
+
+    <g opacity="0.97">
+      <rect x="550" y="418" width="186" height="120" rx="22" fill="#F8F1E5" stroke="#C5A46A" stroke-width="1.5"/>
+      <rect x="570" y="442" width="146" height="72" rx="18" fill="#EEEAF6" stroke="#7B6DA5" stroke-width="1.5"/>
+      <text x="588" y="483" fill="#6A5E9A" font-family="Georgia, serif" font-size="30" font-weight="700">Arquero</text>
+      <text x="574" y="435" fill="#7B6DA5" font-family="Georgia, serif" font-size="12" letter-spacing="3">UNIDAD</text>
+    </g>
+  </g>
+
+  <g>
+    <rect x="840" y="270" width="300" height="246" rx="28" fill="#0E241A" fill-opacity="0.84" stroke="#C69C4B" stroke-opacity="0.28" stroke-width="2"/>
+    <text x="874" y="332" fill="#D7A52F" font-family="Georgia, serif" font-size="18" letter-spacing="5">REGLAS OFICIALES</text>
+    <text x="874" y="386" fill="#F4E7CD" font-family="Georgia, serif" font-size="40" font-weight="700">Match + Battle</text>
+    <text x="874" y="426" fill="#BFAF95" font-family="Georgia, serif" font-size="22">2 a 5 jugadores</text>
+    <text x="874" y="460" fill="#BFAF95" font-family="Georgia, serif" font-size="22">Modo individual y alianzas</text>
+    <text x="874" y="494" fill="#BFAF95" font-family="Georgia, serif" font-size="22">Socket.io + Next.js 14</text>
+    <rect x="874" y="532" width="208" height="12" rx="6" fill="#2C4435"/>
+    <rect x="874" y="532" width="112" height="12" rx="6" fill="url(#accent)">
+      <animate attributeName="width" values="72;170;112;150;112" dur="6s" repeatCount="indefinite"/>
+    </rect>
+  </g>
+
+  <g opacity="0.88">
+    <circle cx="1084" cy="200" r="4" fill="#F2D48D">
+      <animate attributeName="cy" values="200;188;200" dur="4s" repeatCount="indefinite"/>
+    </circle>
+    <circle cx="1112" cy="182" r="3" fill="#F2D48D">
+      <animate attributeName="cy" values="182;170;182" dur="5s" repeatCount="indefinite"/>
+    </circle>
+    <circle cx="1062" cy="170" r="2.5" fill="#F2D48D">
+      <animate attributeName="cy" values="170;160;170" dur="4.5s" repeatCount="indefinite"/>
+    </circle>
+  </g>
+</svg>

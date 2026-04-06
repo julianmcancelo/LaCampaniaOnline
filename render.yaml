@@ -1,0 +1,11 @@
+services:
+  - type: web
+    name: lacampania-backend
+    runtime: node
+    plan: free
+    buildCommand: npm ci && npm run build:backend
+    startCommand: npm run start:backend
+    healthCheckPath: /health
+    envVars:
+      - key: CORS_ALLOWED_ORIGINS
+        value: https://la-campania.vercel.app,http://localhost:3000

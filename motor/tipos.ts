@@ -15,6 +15,7 @@ export type TipoDanio = "puro" | "impuro";
 export type BattlePhase =
   | "WAITING_PLAYERS"
   | "BATTLE_SETUP"
+  | "BATTLE_INITIATIVE"
   | "INITIAL_DEPLOY"
   | "TURN_DRAW"
   | "TURN_ATTACK"
@@ -28,6 +29,7 @@ export type BattlePhase =
 export type RoomStatus = "waiting" | "playing" | "finished";
 
 export type BattleActionType =
+  | "ROLL_INITIATIVE"
   | "INITIAL_DEPLOY"
   | "CONFIRM_INITIAL_DEPLOY"
   | "DRAW_CARD"
@@ -124,7 +126,7 @@ export interface PlayerBattleState {
   initialDeployConfirmed: boolean;
   drewThisTurn: boolean;
   recruitedThisTurn: boolean;
-  pendingSpy: Carta[] | null;
+  pendingSpy: SpyView | null;
 }
 
 export interface BattleLogEntry {
@@ -132,6 +134,14 @@ export interface BattleLogEntry {
   createdAt: number;
   actorPlayerId: string | null;
   text: string;
+}
+
+export interface BattleInitiativeState {
+  contenders: string[];
+  rolls: Record<string, number | null>;
+  winnerPlayerId: string | null;
+  round: number;
+  status: "rolling" | "tiebreak" | "resolved";
 }
 
 export interface BattleResultSummary {
@@ -148,6 +158,7 @@ export interface BattleState {
   turnOrder: string[];
   currentTurn: number;
   startingPlayerIndex: number;
+  initiative: BattleInitiativeState;
   players: Record<string, PlayerBattleState>;
   centralDeck: Carta[];
   discardPile: Carta[];
@@ -215,12 +226,21 @@ export interface OpponentBattleView {
   eliminated: boolean;
 }
 
+export interface SpyView {
+  source: "deck" | "hand";
+  targetPlayerId?: string;
+  targetLabel: string;
+  cards: Carta[];
+}
+
 export interface ClientBattleView {
   id: string;
   battleNumber: number;
   phase: BattlePhase;
   activePlayerId: string | null;
   currentTurn: number;
+  turnOrder: string[];
+  initiative: BattleInitiativeState;
   me: PlayerBattleState;
   opponents: OpponentBattleView[];
   centralDeckCount: number;
@@ -255,12 +275,16 @@ export interface ClientGameView {
   battle: ClientBattleView | null;
   availableActions: AvailableAction[];
   privateContext: {
-    spyView: Carta[] | null;
+    spyView: SpyView | null;
   };
 }
 
 export interface InitialDeployPayload {
   cardIds: string[];
+}
+
+export interface RollInitiativePayload {
+  playerId?: string;
 }
 
 export interface ConfirmInitialDeployPayload {
@@ -285,7 +309,7 @@ export interface AttackWithSiegePayload {
 export interface UsePowerCardPayload {
   cardId: string;
   sourceUnitId: string;
-  targetUnitId?: string;
+  targetUnitId: string;
 }
 
 export interface UseThiefPayload {
@@ -329,6 +353,7 @@ export interface SendReinforcementPayload {
 }
 
 export interface ActionPayloadMap {
+  ROLL_INITIATIVE: RollInitiativePayload;
   INITIAL_DEPLOY: InitialDeployPayload;
   CONFIRM_INITIAL_DEPLOY: ConfirmInitialDeployPayload;
   DRAW_CARD: Record<string, never>;

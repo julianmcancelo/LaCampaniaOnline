@@ -120,8 +120,8 @@ export default function CartaComponente({
       draggable={draggable && !disabled}
       onDragStart={draggable && !disabled ? onDragStart : undefined}
       onDragEnd={draggable && !disabled ? onDragEnd : undefined}
-      whileHover={disabled ? undefined : { y: -4 }}
-      className="relative flex min-h-[230px] w-[148px] flex-col overflow-hidden rounded-[22px] border p-3 text-left shadow-lg transition"
+      whileHover={disabled ? undefined : { y: -2 }}
+      className="relative flex min-h-[188px] w-[120px] flex-col overflow-hidden rounded-[18px] border p-2 text-left shadow-lg transition"
       style={{
         background: "linear-gradient(180deg, rgba(237,228,211,0.98), rgba(219,204,178,0.96))",
         borderColor: selected ? "#f0d28a" : `${tone.accent}66`,
@@ -142,13 +142,13 @@ export default function CartaComponente({
         className="pointer-events-none absolute inset-[12px] rounded-[12px] border"
         style={{ borderColor: `${tone.accent}33` }}
       />
-      <div className="relative mb-3 flex items-start justify-between gap-2">
-        <div className="text-[10px] uppercase tracking-[0.14em]" style={{ color: tone.accent }}>
+      <div className="relative mb-1.5 flex items-start justify-between gap-1.5">
+        <div className="text-[9px] uppercase tracking-[0.1em]" style={{ color: tone.accent }}>
           {typeLabel}
         </div>
         {statusLabel ? (
           <div
-            className="rounded-full border px-2 py-1 text-[9px] font-semibold uppercase tracking-[0.14em]"
+            className="rounded-full border px-2 py-0.5 text-[8px] font-semibold uppercase tracking-[0.1em]"
             style={{
               color: selected ? "#6a4b13" : tone.accent,
               borderColor: selected ? "rgba(240,210,138,0.5)" : `${tone.accent}44`,
@@ -160,7 +160,7 @@ export default function CartaComponente({
         ) : null}
       </div>
       <div
-        className="relative mb-3 flex min-h-[112px] items-center justify-center rounded-[18px] border px-3 py-5 text-center text-base font-semibold"
+        className="relative mb-1.5 flex min-h-[84px] items-center justify-center rounded-[14px] border px-2.5 py-3 text-center text-[13px] font-semibold"
         style={{
           borderColor: `${tone.accent}66`,
           background: `linear-gradient(180deg, rgba(255,250,240,0.54), ${tone.wash})`,
@@ -170,21 +170,21 @@ export default function CartaComponente({
       >
         <div
           aria-hidden="true"
-          className="absolute left-1/2 top-2 h-5 w-5 -translate-x-1/2 rounded-full border"
+          className="absolute left-1/2 top-2 h-4 w-4 -translate-x-1/2 rounded-full border"
           style={{ borderColor: `${tone.accent}88`, background: "rgba(255,255,255,0.4)" }}
         />
         <div
           aria-hidden="true"
-          className="absolute bottom-2 left-1/2 h-5 w-5 -translate-x-1/2 rounded-full border"
+          className="absolute bottom-2 left-1/2 h-4 w-4 -translate-x-1/2 rounded-full border"
           style={{ borderColor: `${tone.accent}88`, background: "rgba(255,255,255,0.28)" }}
         />
         {titleFor(carta)}
       </div>
-      <div className="relative text-[11px] uppercase tracking-[0.1em]" style={{ color: tone.accent }}>
+      <div className="relative text-[9px] uppercase tracking-[0.05em]" style={{ color: tone.accent }}>
         {subtitleFor(carta)}
       </div>
       {secondaryText ? (
-        <div className="relative mt-2 text-[11px] leading-5" style={{ color: "#655749" }}>
+        <div className="relative mt-1 text-[9px] leading-4" style={{ color: "#655749" }}>
           {secondaryText}
         </div>
       ) : null}

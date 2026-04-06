@@ -1,4 +1,3 @@
-import { v4 as uuid } from "uuid";
 import { MAXIMO_CARTAS_MANO, MAXIMO_GUERREROS_CAMPO, VIDA_GUERRERO } from "../constantes";
 import {
   aplicarDanioAUnidad,
@@ -22,6 +21,7 @@ import type {
   UnitInPlay,
 } from "../tipos";
 import { actualizarMarcador, determinarGanadorDeBatalla, resolverGanadorDelMatch } from "../victoria";
+import { crearId } from "../id";
 
 function cloneBattle(battle: BattleState): BattleState {
   return structuredClone(battle);
@@ -29,7 +29,7 @@ function cloneBattle(battle: BattleState): BattleState {
 
 function log(battle: BattleState, actorPlayerId: string | null, text: string): void {
   battle.log.push({
-    id: uuid(),
+    id: crearId("log"),
     createdAt: Date.now(),
     actorPlayerId,
     text,
@@ -111,6 +111,10 @@ function randomIndex(max: number): number {
   return Math.floor(Math.random() * max);
 }
 
+function rollDie(): number {
+  return Math.floor(Math.random() * 6) + 1;
+}
+
 function takeRandomCard(cards: Carta[]): Carta | null {
   if (cards.length === 0) {
     return null;
@@ -132,6 +136,16 @@ function resetCastle(player: PlayerBattleState): void {
   player.castle.reliquia = null;
   player.castle.cards = [];
   player.castle.oroConstruido = 0;
+}
+
+function syncSharedCastle(battle: BattleState, sourcePlayer: PlayerBattleState): void {
+  if (!sourcePlayer.teamId) {
+    return;
+  }
+
+  for (const member of teamMembers(battle, sourcePlayer.teamId)) {
+    member.castle = structuredClone(sourcePlayer.castle);
+  }
 }
 
 function teamMembers(battle: BattleState, teamId: PlayerBattleState["teamId"]): PlayerBattleState[] {
@@ -287,11 +301,60 @@ function isValueOneCard(card: Carta): card is CartaArma | CartaOro {
   return (card.tipo === "oro" || card.tipo === "arma") && card.valor === 1;
 }
 
+function resolveInitiativeRound(battle: BattleState): void {
+  const contenders = battle.initiative.contenders;
+  if (!contenders.every((playerId) => battle.initiative.rolls[playerId] !== null)) {
+    return;
+  }
+
+  const highest = Math.max(...contenders.map((playerId) => battle.initiative.rolls[playerId] ?? 0));
+  const winners = contenders.filter((playerId) => battle.initiative.rolls[playerId] === highest);
+
+  if (winners.length === 1) {
+    const winnerPlayerId = winners[0];
+    battle.initiative.winnerPlayerId = winnerPlayerId;
+    battle.initiative.status = "resolved";
+    battle.activePlayerId = winnerPlayerId;
+    battle.startingPlayerIndex = battle.turnOrder.indexOf(winnerPlayerId);
+    battle.phase = "INITIAL_DEPLOY";
+    log(battle, winnerPlayerId, `${battle.players[winnerPlayerId].displayName} ganó la iniciativa con ${highest}.`);
+    return;
+  }
+
+  battle.initiative.contenders = winners;
+  battle.initiative.round += 1;
+  battle.initiative.status = "tiebreak";
+  for (const playerId of winners) {
+    battle.initiative.rolls[playerId] = null;
+  }
+  log(
+    battle,
+    null,
+    `Empate en iniciativa entre ${winners.map((playerId) => battle.players[playerId].displayName).join(", ")}. Vuelven a tirar.`,
+  );
+}
+
 export function applyBattleAction(battleInput: BattleState, playerId: string, action: BattleAction): BattleState {
   const battle = cloneBattle(battleInput);
   const player = getPlayer(battle, playerId);
 
   switch (action.type) {
+    case "ROLL_INITIATIVE": {
+      if (battle.phase !== "BATTLE_INITIATIVE") {
+        throw new Error("La batalla no está definiendo iniciativa.");
+      }
+      if (!battle.initiative.contenders.includes(playerId)) {
+        throw new Error("No participás en esta ronda de iniciativa.");
+      }
+      if (battle.initiative.rolls[playerId] !== null) {
+        throw new Error("Ya tiraste el dado en esta ronda.");
+      }
+      const result = rollDie();
+      battle.initiative.rolls[playerId] = result;
+      log(battle, playerId, `${player.displayName} tiró iniciativa y obtuvo ${result}.`);
+      resolveInitiativeRound(battle);
+      break;
+    }
     case "INITIAL_DEPLOY": {
       if (battle.phase !== "INITIAL_DEPLOY") {
         throw new Error("La batalla no esta en despliegue inicial.");
@@ -442,6 +505,7 @@ export function applyBattleAction(battleInput: BattleState, playerId: string, ac
       const stolen = shuffled[0] as CartaOro;
       target.castle.cards = target.castle.cards.filter((card) => card.id !== stolen.id);
       target.castle.oroConstruido = target.castle.cards.reduce((sum, card) => sum + card.valor, target.castle.reliquia?.tipo === "oro" ? target.castle.reliquia.valor : 0);
+      syncSharedCastle(battle, target);
       battle.discardPile.push(siege, stolen);
       log(battle, playerId, `${player.displayName} asedio el castillo de ${target.displayName}.`);
       maybeResolveBattle(battle);
@@ -466,23 +530,20 @@ export function applyBattleAction(battleInput: BattleState, playerId: string, ac
         throw new Error("El Dragon no puede usar Poder.");
       }
       if (source.unit.guerrero === "Mago") {
-        const targetId = action.payload.targetUnitId ?? action.payload.sourceUnitId;
-        const target = findUnitOwner(battle, targetId);
+        const target = findUnitOwner(battle, action.payload.targetUnitId);
         if (!target || !allyPlayerIds(battle, player).includes(target.player.playerId)) {
           throw new Error("Sanacion solo puede aplicarse a un guerrero propio o aliado.");
         }
         target.player.field[target.index] = sanarUnidad(target.unit);
+        log(battle, playerId, `${player.displayName} usó Sanación sobre ${target.player.displayName}.`);
       } else if (source.unit.guerrero === "Caballero") {
-        const targetId = action.payload.targetUnitId ?? action.payload.sourceUnitId;
-        const target = findUnitOwner(battle, targetId);
+        const target = findUnitOwner(battle, action.payload.targetUnitId);
         if (!target || !allyPlayerIds(battle, player).includes(target.player.playerId)) {
           throw new Error("Escudo solo puede aplicarse a un guerrero propio o aliado.");
         }
         target.player.field[target.index] = aplicarEscudo(target.unit, power.id);
+        log(battle, playerId, `${player.displayName} protegió a ${target.player.displayName} con Escudo.`);
       } else if (source.unit.guerrero === "Arquero") {
-        if (!action.payload.targetUnitId) {
-          throw new Error("Tiro Certero requiere un objetivo.");
-        }
         const target = findUnitOwner(battle, action.payload.targetUnitId);
         if (!target || allyPlayerIds(battle, player).includes(target.player.playerId)) {
           throw new Error("El objetivo debe pertenecer a un rival.");
@@ -498,11 +559,11 @@ export function applyBattleAction(battleInput: BattleState, playerId: string, ac
             ...(deadUnit.guerrero === "Dragon"
               ? { especial: "Dragon" as const }
               : { guerrero: deadUnit.guerrero as Exclude<UnitInPlay["guerrero"], "Dragon"> }),
-          } as Carta);
+            } as Carta);
         }
+        log(battle, playerId, `${player.displayName} usó Tiro Certero contra ${target.player.displayName}.`);
       }
       battle.discardPile.push(power);
-      log(battle, playerId, `${player.displayName} uso una carta de Poder.`);
       markEliminations(battle, playerId);
       if (!battle.result) {
         advancePhaseInternal(battle);
@@ -537,10 +598,19 @@ export function applyBattleAction(battleInput: BattleState, playerId: string, ac
         throw new Error("Debes jugar la carta de Espia.");
       }
       if (action.payload.targetDeck) {
-        player.pendingSpy = structuredClone(battle.centralDeck.slice(0, 5));
+        player.pendingSpy = {
+          source: "deck",
+          targetLabel: "Mazo central",
+          cards: structuredClone(battle.centralDeck.slice(0, 5)),
+        };
       } else if (action.payload.targetPlayerId) {
         const target = getPlayer(battle, action.payload.targetPlayerId);
-        player.pendingSpy = structuredClone(target.hand);
+        player.pendingSpy = {
+          source: "hand",
+          targetPlayerId: target.playerId,
+          targetLabel: `Mano de ${target.displayName}`,
+          cards: structuredClone(target.hand),
+        };
       } else {
         throw new Error("Espia requiere mirar un mazo o la mano de un rival.");
       }
@@ -607,6 +677,7 @@ export function applyBattleAction(battleInput: BattleState, playerId: string, ac
       }
       target.castle.reliquia = relic;
       target.castle.oroConstruido = relic.tipo === "oro" ? relic.valor : 0;
+      syncSharedCastle(battle, target);
       log(battle, playerId, `${player.displayName} inicio la construccion del castillo con una Reliquia.`);
       maybeResolveBattle(battle);
       if (!battle.result) {
@@ -631,6 +702,7 @@ export function applyBattleAction(battleInput: BattleState, playerId: string, ac
       }
       target.castle.cards.push(card);
       target.castle.oroConstruido += card.valor;
+      syncSharedCastle(battle, target);
       log(battle, playerId, `${player.displayName} agrego ${card.valor} al castillo.`);
       maybeResolveBattle(battle);
       if (!battle.result) {

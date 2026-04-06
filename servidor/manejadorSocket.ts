@@ -49,6 +49,7 @@ function availableActions(match: MatchState | null, playerId: string, room: Sala
   const battle = match.currentBattle;
   const battlePlayer = battle.players[playerId];
   const phaseToAction: AvailableAction[] = [
+    { type: "ROLL_INITIATIVE", enabled: battle.phase === "BATTLE_INITIATIVE" && battle.initiative.contenders.includes(playerId) && battle.initiative.rolls[playerId] === null },
     { type: "DRAW_CARD", enabled: battle.phase === "TURN_DRAW" && battle.activePlayerId === playerId },
     { type: "DISCARD_ONE_FOR_DRAW", enabled: battle.phase === "TURN_DRAW" && battle.activePlayerId === playerId && battlePlayer.hand.length >= 7 },
     { type: "ATTACK_WITH_WEAPON", enabled: battle.phase === "TURN_ATTACK" && battle.activePlayerId === playerId },
@@ -80,6 +81,8 @@ function buildBattleView(match: MatchState, playerId: string): BattleView | null
     phase: battle.phase,
     activePlayerId: battle.activePlayerId,
     currentTurn: battle.currentTurn,
+    turnOrder: battle.turnOrder,
+    initiative: battle.initiative,
     me: battle.players[playerId],
     opponents: Object.values(battle.players)
       .filter((player) => player.playerId !== playerId)

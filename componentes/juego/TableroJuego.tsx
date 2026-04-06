@@ -14,6 +14,8 @@ function enviarAccion(action: BattleAction) {
 
 function tituloFase(fase: string): string {
   switch (fase) {
+    case "BATTLE_INITIATIVE":
+      return "Iniciativa";
     case "TURN_DRAW":
       return "1. Tomar carta";
     case "TURN_ATTACK":
@@ -35,6 +37,8 @@ function tituloFase(fase: string): string {
 
 function ayudaFase(fase: string): string {
   switch (fase) {
+    case "BATTLE_INITIATIVE":
+      return "Todos tiran un dado. El valor más alto comienza; si empatan, desempatan solo los empatados.";
     case "INITIAL_DEPLOY":
       return "Elegí uno o más guerreros de tu mano y desplegalos en el campo.";
     case "TURN_DRAW":
@@ -52,6 +56,13 @@ function ayudaFase(fase: string): string {
     default:
       return "Seguí el orden del turno.";
   }
+}
+
+function formatearHoraEvento(timestamp: number): string {
+  return new Intl.DateTimeFormat("es-AR", {
+    hour: "2-digit",
+    minute: "2-digit",
+  }).format(timestamp);
 }
 
 function cartaEsGuerreroJugable(carta: Carta): boolean {
@@ -112,7 +123,7 @@ function SlotVacio({
 }) {
   return (
     <div
-      className={`mesa-dropzone flex h-[170px] w-36 items-center justify-center rounded-[22px] px-3 text-center text-sm text-[#b8a890] ${
+      className={`mesa-dropzone flex h-[136px] w-[120px] items-center justify-center rounded-[16px] px-2.5 text-center text-[11px] leading-4 text-[#b8a890] ${
         active ? "mesa-dropzone-activa" : ""
       }`}
       onDragOver={onDragOver}
@@ -145,18 +156,18 @@ export default function TableroJuego() {
     setError,
     pendingSpy,
     handLimitExceeded,
-    discardCountRequired,
   } = usarEstadoJuego();
   const [draggedCardId, setDraggedCardId] = useState<string | null>(null);
   const [activeDropzone, setActiveDropzone] = useState<string | null>(null);
   const [panelAbierto, setPanelAbierto] = useState(true);
 
   if (!battle || !me || !match) {
-    return <main className="min-h-screen px-6 py-10 text-[#e8dcc4]">Cargando batalla...</main>;
+    return <main className="min-h-screen px-6 py-10 text-[#6a4b24]">Cargando batalla...</main>;
   }
 
   const battleState = battle;
   const meState = me;
+  const currentPlayerId = playerId ?? "";
   const soyHost = room?.hostPlayerId === playerId;
   const puedeInteractuar = isMyTurn || battleState.phase === "INITIAL_DEPLOY";
   const selectedHand = meState.hand.filter((card) => selectedHandCardIds.includes(card.id));
@@ -164,17 +175,80 @@ export default function TableroJuego() {
   const selectedUnit = meState.field.find((unit) => unit.instanceId === selectedUnitId) ?? null;
   const draggedCard = meState.hand.find((card) => card.id === draggedCardId) ?? null;
   const oponentePrincipal = opponents[0] ?? null;
-  const targetUnit = opponents.flatMap((opponent) => opponent.field).find((unit) => unit.instanceId === selectedTargetId) ?? null;
+  const targetUnit =
+    [meState, ...opponents].flatMap((participant) => participant.field).find((unit) => unit.instanceId === selectedTargetId) ?? null;
   const goldCards = selectedHand.filter((card) => card.tipo === "oro");
   const goldCard = goldCards[0] ?? null;
   const tradeAmount = selectedHandCardIds.length === 6 ? 2 : 1;
   const canTradeBarter = selectedHandCardIds.length === 3 || selectedHandCardIds.length === 6;
   const canInitialDeploy = selectedHand.length > 0 && selectedHand.every(cartaEsGuerreroJugable);
+  const spyCardSelected = selectedCard?.tipo === "especial" && selectedCard.especial === "Espia";
+  const thiefCardSelected = selectedCard?.tipo === "especial" && selectedCard.especial === "Ladron";
+  const powerCardSelected = selectedCard?.tipo === "especial" && selectedCard.especial === "Poder";
+  const aliadosVisibles = [meState, ...opponents.filter((opponent) => opponent.teamId && opponent.teamId === meState.teamId)];
+  const enemigosVisibles = opponents.filter((opponent) => opponent.teamId !== meState.teamId);
 
   const fases = useMemo(
-    () => ["TURN_DRAW", "TURN_ATTACK", "TURN_SABOTAGE", "TURN_TRADE", "TURN_BUILD", "TURN_END_CHECKS"],
-    []
+    () => ["BATTLE_INITIATIVE", "INITIAL_DEPLOY", "TURN_DRAW", "TURN_ATTACK", "TURN_SABOTAGE", "TURN_TRADE", "TURN_BUILD", "TURN_END_CHECKS"],
+    [],
   );
+  const castillosEnMesa = useMemo(() => {
+    const vistos = new Set<string>();
+    const participantes = [meState, ...opponents];
+
+    return participantes
+      .map((player) => {
+        const castleKey = player.castle.ownerTeamId ? `team-${player.castle.ownerTeamId}` : `player-${player.playerId}`;
+        if (vistos.has(castleKey)) {
+          return null;
+        }
+        vistos.add(castleKey);
+
+        const aliados = participantes.filter((entry) =>
+          player.castle.ownerTeamId ? entry.teamId === player.castle.ownerTeamId : entry.playerId === player.playerId,
+        );
+
+        return {
+          key: castleKey,
+          label:
+            player.castle.ownerTeamId && aliados.length > 1
+              ? `Alianza ${player.castle.ownerTeamId} · ${aliados.map((entry) => entry.displayName).join(" + ")}`
+              : player.displayName,
+          construccion: player.castle.oroConstruido,
+          objetivo: player.castle.objetivo,
+          faltante: Math.max(player.castle.objetivo - player.castle.oroConstruido, 0),
+          reliquia: player.castle.reliquia,
+          cartas: player.castle.cards.length,
+        };
+      })
+      .filter((entry): entry is NonNullable<typeof entry> => Boolean(entry));
+  }, [meState, opponents]);
+  const objetivosPoder = useMemo(() => {
+    if (!powerCardSelected || !selectedUnit) {
+      return [];
+    }
+
+    if (selectedUnit.guerrero === "Arquero") {
+      return enemigosVisibles.flatMap((opponent) =>
+        opponent.field.map((unit) => ({
+          unitId: unit.instanceId,
+          label: `${unit.guerrero} · ${opponent.displayName}`,
+        })),
+      );
+    }
+
+    if (selectedUnit.guerrero === "Mago" || selectedUnit.guerrero === "Caballero") {
+      return aliadosVisibles.flatMap((ally) =>
+        ally.field.map((unit) => ({
+          unitId: unit.instanceId,
+          label: `${unit.guerrero} · ${ally.displayName}`,
+        })),
+      );
+    }
+
+    return [];
+  }, [aliadosVisibles, enemigosVisibles, powerCardSelected, selectedUnit]);
+  const eventosBitacora = useMemo(() => [...battleState.log].reverse(), [battleState.log]);
 
   function limpiarSeleccion() {
     clearHandSelection();
@@ -225,6 +299,13 @@ export default function TableroJuego() {
     limpiarSeleccion();
   }
 
+  function tirarIniciativa() {
+    enviarAccion({
+      type: "ROLL_INITIATIVE",
+      payload: {},
+    });
+  }
+
   function atacarConArma(targetId: string) {
     if (!selectedUnitId || !selectedCard || selectedCard.tipo !== "arma") {
       return;
@@ -241,7 +322,7 @@ export default function TableroJuego() {
   }
 
   function usarPoder() {
-    if (!selectedCard || selectedCard.tipo !== "especial" || selectedCard.especial !== "Poder" || !selectedUnitId) {
+    if (!selectedCard || selectedCard.tipo !== "especial" || selectedCard.especial !== "Poder" || !selectedUnitId || !selectedTargetId) {
       return;
     }
     enviarAccion({
@@ -249,7 +330,7 @@ export default function TableroJuego() {
       payload: {
         cardId: selectedCard.id,
         sourceUnitId: selectedUnitId,
-        targetUnitId: selectedTargetId ?? undefined,
+        targetUnitId: selectedTargetId,
       },
     });
     limpiarSeleccion();
@@ -269,21 +350,36 @@ export default function TableroJuego() {
     limpiarSeleccion();
   }
 
-  function usarLadronOEspia() {
-    if (!selectedCard || selectedCard.tipo !== "especial") {
+  function usarLadron(targetPlayerId: string) {
+    if (!selectedCard || selectedCard.tipo !== "especial" || selectedCard.especial !== "Ladron") {
       return;
     }
-    if (selectedCard.especial === "Ladron" && oponentePrincipal) {
-      enviarAccion({
-        type: "USE_THIEF",
-        payload: { cardId: selectedCard.id, targetPlayerId: oponentePrincipal.playerId },
-      });
-    } else if (selectedCard.especial === "Espia") {
-      enviarAccion({
-        type: "USE_SPY",
-        payload: { cardId: selectedCard.id, targetPlayerId: oponentePrincipal?.playerId },
-      });
+    enviarAccion({
+      type: "USE_THIEF",
+      payload: { cardId: selectedCard.id, targetPlayerId },
+    });
+    limpiarSeleccion();
+  }
+
+  function usarEspiaMano(targetPlayerId: string) {
+    if (!selectedCard || selectedCard.tipo !== "especial" || selectedCard.especial !== "Espia") {
+      return;
     }
+    enviarAccion({
+      type: "USE_SPY",
+      payload: { cardId: selectedCard.id, targetPlayerId },
+    });
+    limpiarSeleccion();
+  }
+
+  function usarEspiaMazo() {
+    if (!selectedCard || selectedCard.tipo !== "especial" || selectedCard.especial !== "Espia") {
+      return;
+    }
+    enviarAccion({
+      type: "USE_SPY",
+      payload: { cardId: selectedCard.id, targetDeck: true },
+    });
     limpiarSeleccion();
   }
 
@@ -334,6 +430,21 @@ export default function TableroJuego() {
   }
 
   const accionSugerida = (() => {
+    if (battleState.phase === "BATTLE_INITIATIVE") {
+      return {
+        title: "Definir quién empieza",
+        text:
+          battleState.initiative.status === "tiebreak"
+            ? "Hubo empate en la tirada más alta. Vuelven a tirar solo quienes empataron."
+            : "Cada jugador tira un dado. El valor más alto inicia la batalla.",
+        label: "Tirar dado",
+        action: tirarIniciativa,
+        disabled:
+          !battleState.initiative.contenders.includes(currentPlayerId) ||
+          battleState.initiative.rolls[currentPlayerId] !== null ||
+          battleState.initiative.status === "resolved",
+      };
+    }
     if (battleState.phase === "INITIAL_DEPLOY") {
       return {
         title: "Preparar el ejército",
@@ -367,7 +478,7 @@ export default function TableroJuego() {
         text: "Elegí el guerrero que activa el Poder y, si hace falta, el objetivo.",
         label: "Usar Poder",
         action: usarPoder,
-        disabled: !isMyTurn || !selectedUnitId,
+        disabled: !isMyTurn || !selectedUnitId || !selectedTargetId,
       };
     }
     if (battleState.phase === "TURN_ATTACK" && selectedCard?.tipo === "especial" && selectedCard.especial === "Asedio") {
@@ -382,10 +493,16 @@ export default function TableroJuego() {
     if (battleState.phase === "TURN_SABOTAGE" && selectedCard?.tipo === "especial") {
       return {
         title: "Sabotaje listo",
-        text: "Ladrón roba al azar y Espía mira la mano rival o el mazo central.",
-        label: "Jugar sabotaje",
-        action: usarLadronOEspia,
-        disabled: !isMyTurn || (selectedCard.especial !== "Ladron" && selectedCard.especial !== "Espia"),
+        text:
+          selectedCard.especial === "Espia"
+            ? "Elegí si querés mirar el mazo central o la mano de un rival."
+            : "Elegí a qué rival querés robarle una carta al azar.",
+        label: selectedCard.especial === "Espia" ? "Ver mazo central" : "Robar al rival",
+        action:
+          selectedCard.especial === "Espia"
+            ? usarEspiaMazo
+            : () => (oponentePrincipal ? usarLadron(oponentePrincipal.playerId) : undefined),
+        disabled: !isMyTurn || (selectedCard.especial === "Espia" ? false : !oponentePrincipal),
       };
     }
     if (battleState.phase === "TURN_TRADE") {
@@ -411,6 +528,19 @@ export default function TableroJuego() {
 
   const accionesPanel = (() => {
     const acciones: Array<{ id: string; label: string; kind: "primary" | "secondary" | "ghost"; disabled: boolean; onClick: () => void }> = [];
+    if (battleState.phase === "BATTLE_INITIATIVE") {
+      acciones.push({
+        id: "initiative",
+        label: "Tirar dado",
+        kind: "primary",
+        disabled:
+          !battleState.initiative.contenders.includes(currentPlayerId) ||
+          battleState.initiative.rolls[currentPlayerId] !== null ||
+          battleState.initiative.status === "resolved",
+        onClick: tirarIniciativa,
+      });
+      return acciones;
+    }
     if (battleState.phase === "INITIAL_DEPLOY") {
       acciones.push({ id: "deploy", label: "Desplegar seleccionados", kind: "primary", disabled: !canInitialDeploy, onClick: desplegarSeleccionInicial });
       acciones.push({ id: "confirm", label: "Confirmar despliegue", kind: "secondary", disabled: meState.field.length === 0 || meState.initialDeployConfirmed, onClick: confirmarDespliegue });
@@ -422,13 +552,48 @@ export default function TableroJuego() {
       acciones.push({ id: "recruit", label: "Reclutar", kind: "secondary", disabled: false, onClick: () => reclutarCarta(selectedCard) });
     }
     if (battleState.phase === "TURN_ATTACK" && selectedCard?.tipo === "especial" && selectedCard.especial === "Poder") {
-      acciones.push({ id: "power", label: "Usar Poder", kind: "primary", disabled: !selectedUnitId, onClick: usarPoder });
+      acciones.push({ id: "power", label: "Usar Poder", kind: "primary", disabled: !selectedUnitId || !selectedTargetId, onClick: usarPoder });
+      for (const objetivo of objetivosPoder) {
+        acciones.push({
+          id: `power-target-${objetivo.unitId}`,
+          label: `Objetivo: ${objetivo.label}`,
+          kind: "secondary",
+          disabled: false,
+          onClick: () => setSelectedTarget(objetivo.unitId),
+        });
+      }
     }
     if (battleState.phase === "TURN_ATTACK" && selectedCard?.tipo === "especial" && selectedCard.especial === "Asedio") {
       acciones.push({ id: "siege", label: "Usar Asedio", kind: "primary", disabled: !oponentePrincipal, onClick: usarAsedio });
     }
     if (battleState.phase === "TURN_SABOTAGE") {
-      acciones.push({ id: "sabotage", label: "Jugar sabotaje", kind: "primary", disabled: !selectedCard || selectedCard.tipo !== "especial", onClick: usarLadronOEspia });
+      if (spyCardSelected) {
+        acciones.push({ id: "spy-deck", label: "Ver mazo central", kind: "primary", disabled: false, onClick: usarEspiaMazo });
+        for (const opponent of opponents) {
+          acciones.push({
+            id: `spy-${opponent.playerId}`,
+            label: `Ver mano de ${opponent.displayName}`,
+            kind: "secondary",
+            disabled: false,
+            onClick: () => usarEspiaMano(opponent.playerId),
+          });
+        }
+      } else if (thiefCardSelected) {
+        if (oponentePrincipal) {
+          acciones.push({ id: "thief", label: `Robar a ${oponentePrincipal.displayName}`, kind: "primary", disabled: false, onClick: () => usarLadron(oponentePrincipal.playerId) });
+        }
+        for (const opponent of opponents.filter((entry) => entry.playerId !== oponentePrincipal?.playerId)) {
+          acciones.push({
+            id: `thief-${opponent.playerId}`,
+            label: `Robar a ${opponent.displayName}`,
+            kind: "secondary",
+            disabled: false,
+            onClick: () => usarLadron(opponent.playerId),
+          });
+        }
+      } else {
+        acciones.push({ id: "sabotage", label: "Elegí Ladrón o Espía", kind: "primary", disabled: true, onClick: () => undefined });
+      }
     }
     if (battleState.phase === "TURN_TRADE") {
       acciones.push({ id: "trade-gold", label: "Comprar con Oro", kind: "primary", disabled: !goldCard, onClick: comerciarConOro });
@@ -466,6 +631,19 @@ export default function TableroJuego() {
                     atacarConArma(unit.instanceId);
                     return;
                   }
+                  if (battleState.phase === "TURN_ATTACK" && powerCardSelected && selectedUnit?.guerrero === "Arquero") {
+                    setSelectedTarget(selectedTargetId === unit.instanceId ? null : unit.instanceId);
+                    return;
+                  }
+                  setSelectedTarget(selectedTargetId === unit.instanceId ? null : unit.instanceId);
+                  return;
+                }
+                if (
+                  battleState.phase === "TURN_ATTACK" &&
+                  powerCardSelected &&
+                  selectedUnit &&
+                  (selectedUnit.guerrero === "Mago" || selectedUnit.guerrero === "Caballero")
+                ) {
                   setSelectedTarget(selectedTargetId === unit.instanceId ? null : unit.instanceId);
                   return;
                 }
@@ -509,18 +687,18 @@ export default function TableroJuego() {
   }
 
   return (
-    <main className="min-h-screen bg-[#efe2c9] px-3 py-3 text-[#5d4630] md:px-5">
-      <div className="mesa-tablero mx-auto flex min-h-[calc(100vh-1.5rem)] max-w-[1640px] flex-col gap-4 rounded-[32px] p-4 md:p-5">
-        <header className="mesa-superficie rounded-[28px] px-5 py-4">
+    <main className="min-h-screen bg-[#efe2c9] px-2 py-2 text-[#5d4630] md:px-3">
+      <div className="mesa-tablero mx-auto flex min-h-[calc(100vh-1rem)] max-w-[1540px] flex-col gap-2.5 rounded-[24px] p-2.5 md:p-3">
+        <header className="mesa-superficie rounded-[24px] px-4 py-3">
           <div className="flex flex-wrap items-center justify-between gap-4">
             <div>
-              <div className="mesa-etiqueta mb-2">Mesa táctica</div>
-              <h1 className="titulo-medieval titulo-mesa text-3xl md:text-4xl">La Campaña</h1>
+              <div className="mesa-etiqueta mb-1">Mesa táctica</div>
+              <h1 className="titulo-medieval titulo-mesa text-xl md:text-[1.7rem]">La Campaña</h1>
             </div>
-            <div className="flex flex-wrap items-center justify-end gap-3 text-sm">
-              <div className="mesa-chip rounded-full px-4 py-2">Fase: {tituloFase(battleState.phase)}</div>
-              <div className="mesa-chip rounded-full px-4 py-2">Turno {battleState.currentTurn}</div>
-              <div className="mesa-chip rounded-full px-4 py-2">
+            <div className="flex flex-wrap items-center justify-end gap-2 text-sm">
+              <div className="mesa-chip rounded-full px-3 py-1.5">Fase: {tituloFase(battleState.phase)}</div>
+              <div className="mesa-chip rounded-full px-3 py-1.5">Turno {battleState.currentTurn}</div>
+              <div className="mesa-chip rounded-full px-3 py-1.5">
                 Castillo {meState.castle.oroConstruido}/{meState.castle.objetivo}
               </div>
               <button
@@ -541,22 +719,31 @@ export default function TableroJuego() {
               ) : null}
             </div>
           </div>
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={battleState.phase + (selectedUnitId ?? "") + (selectedCard?.id ?? "")}
-              initial={{ opacity: 0, y: -8 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: 8 }}
-              className="mesa-chip mt-4 rounded-2xl px-4 py-3 text-sm"
+          <div className="mt-2 flex items-center justify-between gap-3">
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={battleState.phase + (selectedUnitId ?? "") + (selectedCard?.id ?? "")}
+                initial={{ opacity: 0, y: -4 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: 4 }}
+                className="min-w-0 text-xs leading-5 text-[#7f6540]"
+              >
+                {accionSugerida?.text ?? ayudaFase(battleState.phase)}
+              </motion.div>
+            </AnimatePresence>
+            <button
+              type="button"
+              className="text-[11px] uppercase tracking-[0.12em] text-[#8c6327]"
+              onClick={() => setPanelAbierto((value) => !value)}
             >
-              {accionSugerida?.text ?? ayudaFase(battleState.phase)}
-            </motion.div>
-          </AnimatePresence>
-          <div className="mt-4 grid gap-2 md:grid-cols-3 xl:grid-cols-6">
+              {panelAbierto ? "Ocultar lateral" : "Mostrar lateral"}
+            </button>
+          </div>
+          <div className="mt-2 grid grid-cols-2 gap-1.5 md:grid-cols-3 xl:grid-cols-6">
             {fases.map((fase) => (
               <div
                 key={fase}
-                className="rounded-xl border px-3 py-2 text-center text-xs"
+                className="rounded-lg border px-2 py-1 text-center text-[10px]"
                 style={{
                   borderColor: battleState.phase === fase ? "rgba(240,210,138,0.9)" : "rgba(212,160,23,0.12)",
                   background: battleState.phase === fase ? "rgba(212,160,23,0.12)" : "rgba(26,74,58,0.08)",
@@ -567,6 +754,33 @@ export default function TableroJuego() {
               </div>
             ))}
           </div>
+          <div className="mt-2 flex flex-wrap gap-2">
+            {castillosEnMesa.map((castillo) => (
+              <div key={castillo.key} className="mesa-chip rounded-full px-3 py-1.5">
+                {castillo.label}: {castillo.construccion}/{castillo.objetivo} · Faltan {castillo.faltante}
+                {castillo.reliquia ? ` · Reliquia ${castillo.reliquia.valor}` : " · Sin reliquia"}
+              </div>
+            ))}
+          </div>
+          {battleState.phase === "BATTLE_INITIATIVE" ? (
+            <div className="mt-2 flex flex-wrap gap-2">
+              {battleState.turnOrder.map((turnPlayerId) => {
+                const battlePlayer = turnPlayerId === meState.playerId ? meState : opponents.find((opponent) => opponent.playerId === turnPlayerId);
+                const roll = battleState.initiative.rolls[turnPlayerId];
+                const enDesempate = battleState.initiative.contenders.includes(turnPlayerId);
+                return (
+                  <div key={turnPlayerId} className="mesa-chip rounded-full px-3 py-1.5">
+                    {battlePlayer?.displayName ?? turnPlayerId}: {roll ?? "sin tirar"}{enDesempate && battleState.initiative.status !== "resolved" ? " · juega" : ""}
+                  </div>
+                );
+              })}
+              {battleState.initiative.winnerPlayerId ? (
+                <div className="mesa-chip rounded-full px-3 py-1.5">
+                  Inicia: {(battleState.initiative.winnerPlayerId === meState.playerId ? meState : opponents.find((opponent) => opponent.playerId === battleState.initiative.winnerPlayerId))?.displayName ?? battleState.initiative.winnerPlayerId}
+                </div>
+              ) : null}
+            </div>
+          ) : null}
         </header>
 
         {error ? (
@@ -580,37 +794,37 @@ export default function TableroJuego() {
           </div>
         ) : null}
 
-        <div className="grid flex-1 gap-4 xl:grid-cols-[1.55fr_0.45fr]">
-          <section className="mesa-superficie flex min-h-0 flex-col rounded-[28px] px-5 py-5">
-            <div className="mb-3 flex items-center justify-between">
+        <div className={`grid flex-1 gap-2.5 ${panelAbierto ? "xl:grid-cols-[1.86fr_0.24fr]" : "grid-cols-1"}`}>
+          <section className="mesa-superficie flex min-h-0 flex-col rounded-[24px] px-4 py-4">
+            <div className="mb-2 flex items-center justify-between gap-3">
               <div className="mesa-etiqueta">Campo rival</div>
-              <div className="text-sm text-[#b8a890]">{oponentePrincipal ? `${oponentePrincipal.displayName} · mano ${oponentePrincipal.cardCount}` : "Sin rival"}</div>
+              <div className="text-xs text-[#8f7250]">{oponentePrincipal ? `${oponentePrincipal.displayName} · mano ${oponentePrincipal.cardCount}` : "Sin rival"}</div>
             </div>
-            <div className="mb-5 flex flex-wrap gap-3">{renderSlots(oponentePrincipal?.field ?? [], false)}</div>
+            <div className="mb-3 flex flex-wrap gap-2">{renderSlots(oponentePrincipal?.field ?? [], false)}</div>
 
-            <div className="mb-3 flex items-center justify-between">
+            <div className="mb-2 flex items-center justify-between gap-3">
               <div className="mesa-etiqueta">Tu campo</div>
-              <div className="text-sm text-[#b8a890]">{puedeInteractuar ? "Podés jugar cartas aquí" : "Esperando tu turno"}</div>
+              <div className="text-xs text-[#8f7250]">{puedeInteractuar ? "Podés jugar cartas aquí" : "Esperando tu turno"}</div>
             </div>
-            <div className="mb-5 flex flex-wrap gap-3">{renderSlots(meState.field, true)}</div>
+            <div className="mb-3 flex flex-wrap gap-2">{renderSlots(meState.field, true)}</div>
 
-            <div className="mb-3 flex items-center justify-between">
+            <div className="mb-2 flex items-center justify-between gap-3">
               <div className="mesa-etiqueta">Tu mano</div>
-              <div className="texto-mesa max-w-[420px] text-right text-sm leading-6">{ayudaFase(battleState.phase)}</div>
+              <div className="texto-mesa max-w-[300px] text-right text-[11px] leading-4.5">{ayudaFase(battleState.phase)}</div>
             </div>
-            <div className="rounded-[24px] border border-[rgba(120,85,43,0.12)] bg-[rgba(255,250,242,0.58)] px-4 py-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.45)]">
-              <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+            <div className="rounded-[20px] border border-[rgba(120,85,43,0.12)] bg-[rgba(255,250,242,0.58)] px-3 py-3.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.45)]">
+              <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
                 <div className="text-xs uppercase tracking-[0.18em] text-[#d4a017]">
                   {selectedHandCardIds.length > 0 ? `${selectedHandCardIds.length} carta${selectedHandCardIds.length > 1 ? "s" : ""} seleccionada${selectedHandCardIds.length > 1 ? "s" : ""}` : "Sin selección"}
                 </div>
-                <div className="text-sm text-[#b8a890]">
+                <div className="text-xs text-[#8f7250]">
                   {battleState.phase === "TURN_TRADE" ? "Click para elegir cartas de compra o trueque." : "Click para preparar una acción o arrastrar guerreros."}
                 </div>
               </div>
               {battleState.phase === "TURN_TRADE" ? (
-                <div className="mb-4 rounded-2xl border border-[rgba(212,160,23,0.12)] bg-[rgba(26,74,58,0.12)] px-4 py-3 text-sm text-[#cfc2a9]">
-                  <div className="mb-2 text-[11px] uppercase tracking-[0.16em] text-[#d4a017]">Compra actual</div>
-                  <div className="flex flex-wrap gap-x-5 gap-y-2 leading-6">
+                <div className="mb-3 rounded-2xl border border-[rgba(212,160,23,0.12)] bg-[rgba(26,74,58,0.12)] px-3 py-2.5 text-xs text-[#cfc2a9]">
+                  <div className="mb-2 text-[11px] uppercase tracking-[0.16em] text-[#9a6b24]">Compra actual</div>
+                  <div className="flex flex-wrap gap-x-4 gap-y-1.5 leading-5">
                     <div>Oro elegido: <span className="font-semibold text-[#6e4d27]">{goldCard?.valor ?? 0}</span></div>
                     <div>Compra estimada: <span className="font-semibold text-[#6e4d27]">{goldCard ? Math.floor(goldCard.valor / 2) : 0}</span></div>
                     <div>Trueque: <span className="font-semibold text-[#6e4d27]">{selectedHandCardIds.length}</span> / 3 o 6</div>
@@ -618,18 +832,18 @@ export default function TableroJuego() {
                 </div>
               ) : null}
               {battleState.phase === "TURN_END_CHECKS" && handLimitExceeded ? (
-                <div className="mb-4 rounded-2xl border border-[rgba(212,160,23,0.12)] bg-[rgba(58,42,18,0.18)] px-4 py-3 text-sm text-[#e8dcc4]">
-                  <div className="mb-2 text-[11px] uppercase tracking-[0.16em] text-[#d4a017]">Límite de mano</div>
+                <div className="mb-3 rounded-2xl border border-[rgba(212,160,23,0.12)] bg-[rgba(58,42,18,0.18)] px-3 py-2.5 text-xs text-[#e8dcc4]">
+                  <div className="mb-2 text-[11px] uppercase tracking-[0.16em] text-[#9a6b24]">Límite de mano</div>
                   Tenés más de 7 cartas. El servidor aplicará la penalización al azar.
                 </div>
               ) : null}
               {battleState.phase === "TURN_DRAW" && meState.hand.length >= 7 ? (
-                <div className="mb-4 rounded-2xl border border-[rgba(212,160,23,0.12)] bg-[rgba(58,42,18,0.18)] px-4 py-3 text-sm text-[#e8dcc4]">
-                  <div className="mb-2 text-[11px] uppercase tracking-[0.16em] text-[#d4a017]">Tomar carta</div>
+                <div className="mb-3 rounded-2xl border border-[rgba(212,160,23,0.12)] bg-[rgba(58,42,18,0.18)] px-3 py-2.5 text-xs text-[#e8dcc4]">
+                  <div className="mb-2 text-[11px] uppercase tracking-[0.16em] text-[#9a6b24]">Tomar carta</div>
                   Seleccioná una carta para descartar antes de robar.
                 </div>
               ) : null}
-              <div className="flex flex-wrap gap-4">
+              <div className="flex flex-wrap gap-2.5">
                 {meState.hand.map((card) => (
                   <CartaComponente
                     key={card.id}
@@ -650,86 +864,85 @@ export default function TableroJuego() {
             </div>
           </section>
 
-          <aside className="flex min-h-0 flex-col gap-4">
+          {panelAbierto ? (
+          <aside className="flex min-h-0 flex-col gap-2.5">
             <AnimatePresence>
-              {accionSugerida ? (
-                <motion.section initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 12 }} className="mesa-lateral rounded-[24px] px-4 py-4">
-                  <div className="mesa-etiqueta mb-2">Acción sugerida</div>
-                  <h3 className="text-lg text-[#6a4317]" style={{ fontFamily: "'Cinzel Decorative', Georgia, serif" }}>
-                    {accionSugerida.title}
-                  </h3>
-                  <p className="mt-2 text-sm leading-6 text-[#5d4630]">{accionSugerida.text}</p>
-                  <button type="button" className="boton-campana mt-4 w-full justify-center disabled:opacity-50" disabled={accionSugerida.disabled} onClick={accionSugerida.action}>
-                    {accionSugerida.label}
-                  </button>
-                </motion.section>
-              ) : null}
+              {accionSugerida ? null : null}
             </AnimatePresence>
 
-            <section className="mesa-lateral rounded-[24px] px-4 py-4">
-              <div className="mb-3 flex items-center justify-between">
+            <section className="mesa-lateral rounded-[20px] px-3 py-3">
+              <div className="mb-2 flex items-center justify-between">
                 <div>
                   <div className="mesa-etiqueta mb-1">Acciones</div>
-                  <h2 className="text-xl text-[#6a4317]" style={{ fontFamily: "'Cinzel Decorative', Georgia, serif" }}>
-                    {panelAbierto ? "Orden de acciones" : "Acciones"}
-                  </h2>
+                  <h2 className="text-base text-[#6a4317]" style={{ fontFamily: "'Cinzel Decorative', Georgia, serif" }}>Acciones</h2>
                 </div>
-                <button type="button" className="text-sm text-[#8c6327]" onClick={() => setPanelAbierto((value) => !value)}>
-                  {panelAbierto ? "Ocultar" : "Mostrar"}
-                </button>
+                {accionSugerida ? <div className="text-[10px] uppercase tracking-[0.1em] text-[#8c6327]">{accionSugerida.title}</div> : null}
               </div>
-              {panelAbierto ? (
-                <div className="grid gap-3">
-                  <div className="rounded-2xl border border-[rgba(212,160,23,0.12)] bg-[rgba(232,220,196,0.03)] px-3 py-3 text-sm leading-6 text-[#cfc2a9]">
-                    <div className="mb-1 text-[11px] uppercase tracking-[0.16em] text-[#d4a017]">Ahora</div>
-                    {accionSugerida?.text ?? ayudaFase(battleState.phase)}
-                  </div>
-                  <div className="grid gap-3">
-                    {accionesPanel.filter((accion) => accion.kind === "primary").map((accion) => (
-                      <button key={accion.id} type="button" className="boton-panel boton-panel-principal" disabled={accion.disabled} onClick={accion.onClick}>
-                        {accion.label}
-                      </button>
-                    ))}
-                  </div>
-                  {accionesPanel.some((accion) => accion.kind === "secondary") ? (
-                    <div>
-                      <div className="mb-2 text-[11px] uppercase tracking-[0.16em] text-[#d4a017]">Opciones</div>
-                      <div className="grid gap-2">
-                        {accionesPanel.filter((accion) => accion.kind === "secondary").map((accion) => (
-                          <button key={accion.id} type="button" className="boton-panel" disabled={accion.disabled} onClick={accion.onClick}>
-                            {accion.label}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                  ) : null}
-                  <div className="pt-1">
-                    {accionesPanel.filter((accion) => accion.kind === "ghost").map((accion) => (
-                      <button key={accion.id} type="button" className="boton-panel boton-panel-secundario w-full" disabled={accion.disabled} onClick={accion.onClick}>
-                        {accion.label}
-                      </button>
-                    ))}
-                  </div>
+              <div className="grid gap-2">
+                <div className="grid gap-2">
+                  {accionesPanel.filter((accion) => accion.kind === "primary").map((accion) => (
+                    <button key={accion.id} type="button" className="boton-panel boton-panel-principal" disabled={accion.disabled} onClick={accion.onClick}>
+                      {accion.label}
+                    </button>
+                  ))}
                 </div>
-              ) : null}
+                {accionesPanel.some((accion) => accion.kind === "secondary") ? (
+                  <div className="grid gap-1.5">
+                    {accionesPanel.filter((accion) => accion.kind === "secondary").map((accion) => (
+                      <button key={accion.id} type="button" className="boton-panel" disabled={accion.disabled} onClick={accion.onClick}>
+                        {accion.label}
+                      </button>
+                    ))}
+                  </div>
+                ) : null}
+                <div className="pt-0.5">
+                  {accionesPanel.filter((accion) => accion.kind === "ghost").map((accion) => (
+                    <button key={accion.id} type="button" className="boton-panel boton-panel-secundario w-full" disabled={accion.disabled} onClick={accion.onClick}>
+                      {accion.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
             </section>
 
-            <section className="mesa-lateral flex-1 overflow-hidden rounded-[24px] px-4 py-4">
-              <div className="mesa-etiqueta mb-3">Bitácora</div>
-              <div className="max-h-[260px] space-y-2 overflow-auto pr-1 text-sm text-[#5d4630]">
-                {battleState.log.map((entry) => (
-                  <div key={entry.id} className="rounded-2xl border border-[rgba(120,85,43,0.1)] bg-[rgba(255,248,239,0.78)] px-3 py-3">
-                    {entry.text}
+            <section className="mesa-lateral flex-1 overflow-hidden rounded-[20px] px-3 py-3">
+              <div className="mb-2 flex items-center justify-between gap-2">
+                <div className="mesa-etiqueta">Bitácora</div>
+                <div className="rounded-full border border-[rgba(166,125,47,0.22)] bg-[rgba(255,247,236,0.7)] px-2 py-1 text-[10px] uppercase tracking-[0.12em] text-[#7b5727]">
+                  {eventosBitacora.length} eventos
+                </div>
+              </div>
+              <div className="mb-2 rounded-2xl border border-[rgba(166,125,47,0.18)] bg-[rgba(255,248,239,0.7)] px-3 py-2 text-[11px] text-[#7b5a31]">
+                Último evento arriba. La bitácora se actualiza con cada acción resuelta por el servidor.
+              </div>
+              <div className="max-h-[260px] space-y-2 overflow-auto pr-1">
+                {eventosBitacora.map((entry, index) => (
+                  <div
+                    key={entry.id}
+                    className={`rounded-2xl border px-3 py-2.5 ${
+                      index === 0
+                        ? "border-[rgba(166,125,47,0.3)] bg-[rgba(255,247,236,0.96)] shadow-[0_8px_20px_rgba(74,45,13,0.08)]"
+                        : "border-[rgba(120,85,43,0.12)] bg-[rgba(255,248,239,0.8)]"
+                    }`}
+                  >
+                    <div className="mb-1 flex items-center justify-between gap-2">
+                      <div className="text-[10px] uppercase tracking-[0.12em] text-[#9a6b24]">
+                        {index === 0 ? "Última acción" : "Registro"}
+                      </div>
+                      <div className="text-[10px] text-[#9a8463]">{formatearHoraEvento(entry.createdAt)}</div>
+                    </div>
+                    <div className="text-xs leading-5 text-[#5d4630]">{entry.text}</div>
                   </div>
                 ))}
               </div>
             </section>
 
             {pendingSpy ? (
-              <section className="mesa-lateral rounded-[24px] px-4 py-4">
-                <div className="mesa-etiqueta mb-3">Espionaje</div>
-                <div className="flex flex-wrap gap-3">
-                  {pendingSpy.map((card) => (
+              <section className="mesa-lateral rounded-[20px] px-3 py-3">
+                <div className="mesa-etiqueta mb-1.5">Espionaje</div>
+                <div className="mb-2 text-xs text-[#765d3c]">{pendingSpy.targetLabel}</div>
+                <div className="flex flex-wrap gap-2.5">
+                  {pendingSpy.cards.map((card) => (
                     <CartaComponente key={card.id} carta={card} />
                   ))}
                 </div>
@@ -737,12 +950,13 @@ export default function TableroJuego() {
             ) : null}
 
             {targetUnit ? (
-              <section className="mesa-lateral rounded-[24px] px-4 py-4">
-                <div className="mesa-etiqueta mb-2">Objetivo</div>
-                <div className="text-sm text-[#cfc2a9]">{targetUnit.guerrero} seleccionado para una acción.</div>
+              <section className="mesa-lateral rounded-[20px] px-3 py-3">
+                <div className="mesa-etiqueta mb-1.5">Objetivo</div>
+                <div className="text-xs text-[#765d3c]">{targetUnit.guerrero} seleccionado para una acción.</div>
               </section>
             ) : null}
           </aside>
+          ) : null}
         </div>
       </div>
     </main>

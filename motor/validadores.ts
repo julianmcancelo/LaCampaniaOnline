@@ -41,11 +41,26 @@ export function validateBattleAction(match: MatchState, playerId: string, action
     return ok();
   }
 
+  if (battle.phase === "BATTLE_INITIATIVE") {
+    if (action.type !== "ROLL_INITIATIVE") {
+      return fail("Solo se permite la tirada de iniciativa.");
+    }
+    if (!battle.initiative.contenders.includes(playerId)) {
+      return fail("No te toca desempatar la iniciativa.");
+    }
+    if (battle.initiative.rolls[playerId] !== null) {
+      return fail("Ya tiraste en esta ronda de iniciativa.");
+    }
+    return ok();
+  }
+
   if (battle.activePlayerId !== playerId) {
     return fail("No es tu turno.");
   }
 
   switch (action.type) {
+    case "ROLL_INITIATIVE":
+      return fail("La iniciativa ya fue resuelta.");
     case "DRAW_CARD":
     case "DISCARD_ONE_FOR_DRAW":
       return requirePhase(battle.phase, "TURN_DRAW");

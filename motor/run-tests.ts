@@ -56,14 +56,65 @@ function special(id: string, especial: CartaEspecial["especial"]): CartaEspecial
   };
 }
 
+function withMockedRandom<T>(values: number[], run: () => T): T {
+  const original = Math.random;
+  let index = 0;
+  Math.random = () => {
+    const value = values[index] ?? values[values.length - 1] ?? 0;
+    index += 1;
+    return value;
+  };
+
+  try {
+    return run();
+  } finally {
+    Math.random = original;
+  }
+}
+
 const checks: Array<{ name: string; run: () => void }> = [
   {
     name: "setup reparte 3 guerreros y 4 recursos",
     run: () => {
       const battle = crearBatalla(createPlayers(2), "individual", 1);
+      assert.equal(battle.phase, "BATTLE_INITIATIVE");
       assert.equal(battle.players.p1.hand.length, 7);
       assert.equal(battle.players.p1.hand.filter((card) => card.tipo === "guerrero").length, 3);
       assert.equal(battle.players.p2.hand.filter((card) => card.tipo === "guerrero").length, 3);
+    },
+  },
+  {
+    name: "la iniciativa define el primer jugador y pasa a despliegue",
+    run: () => {
+      const battle = crearBatalla(createPlayers(2), "individual", 1);
+
+      const result = withMockedRandom([0.1, 0.9], () => {
+        const afterP1 = applyBattleAction(battle, "p1", { type: "ROLL_INITIATIVE", payload: {} });
+        return applyBattleAction(afterP1, "p2", { type: "ROLL_INITIATIVE", payload: {} });
+      });
+
+      assert.equal(result.phase, "INITIAL_DEPLOY");
+      assert.equal(result.initiative.winnerPlayerId, "p2");
+      assert.equal(result.activePlayerId, "p2");
+    },
+  },
+  {
+    name: "la iniciativa desempatan solo los empatados",
+    run: () => {
+      const battle = crearBatalla(createPlayers(3), "individual", 1);
+
+      const result = withMockedRandom([0.4, 0.4, 0.1, 0.9, 0.2], () => {
+        let state = applyBattleAction(battle, "p1", { type: "ROLL_INITIATIVE", payload: {} });
+        state = applyBattleAction(state, "p2", { type: "ROLL_INITIATIVE", payload: {} });
+        state = applyBattleAction(state, "p3", { type: "ROLL_INITIATIVE", payload: {} });
+        assert.equal(state.initiative.status, "tiebreak");
+        assert.deepEqual(state.initiative.contenders.sort(), ["p1", "p2"]);
+        state = applyBattleAction(state, "p1", { type: "ROLL_INITIATIVE", payload: {} });
+        return applyBattleAction(state, "p2", { type: "ROLL_INITIATIVE", payload: {} });
+      });
+
+      assert.equal(result.phase, "INITIAL_DEPLOY");
+      assert.equal(result.initiative.winnerPlayerId, "p1");
     },
   },
   {
@@ -118,25 +169,150 @@ const checks: Array<{ name: string; run: () => void }> = [
     },
   },
   {
-    name: "poder de caballero agrega escudo de 5",
+    name: "poder de caballero agrega escudo de 5 a una unidad aliada",
     run: () => {
-      const battle = crearBatalla(createPlayers(2), "individual", 1);
+      const battle = crearBatalla(createPlayers(4, "alianzas"), "alianzas", 1);
       battle.phase = "TURN_ATTACK";
       battle.activePlayerId = "p1";
       battle.players.p1.hand = [special("poder-1", "Poder")];
       const knight = crearUnidadDesdeCarta(warrior("cab-2", "Caballero"), battle.currentTurn);
+      const allyArcher = crearUnidadDesdeCarta(warrior("arq-ally", "Arquero"), battle.currentTurn);
       battle.players.p1.field = [knight];
+      battle.players.p3.field = [allyArcher];
 
       const result = applyBattleAction(battle, "p1", {
         type: "USE_POWER_CARD",
         payload: {
           cardId: "poder-1",
           sourceUnitId: knight.instanceId,
+          targetUnitId: allyArcher.instanceId,
         },
       });
 
-      assert.equal(result.players.p1.field[0].shield?.remaining, 5);
+      assert.equal(result.players.p3.field[0].shield?.remaining, 5);
       assert.equal(result.discardPile.some((card) => card.id === "poder-1"), true);
+    },
+  },
+  {
+    name: "poder de mago cura una unidad aliada",
+    run: () => {
+      const battle = crearBatalla(createPlayers(4, "alianzas"), "alianzas", 1);
+      battle.phase = "TURN_ATTACK";
+      battle.activePlayerId = "p1";
+      battle.players.p1.hand = [special("poder-sanacion", "Poder")];
+      const mage = crearUnidadDesdeCarta(warrior("mago-1", "Mago"), battle.currentTurn);
+      const allyKnight = crearUnidadDesdeCarta(warrior("cab-ally", "Caballero"), battle.currentTurn);
+      allyKnight.damageTaken = 6;
+      allyKnight.vida = 4;
+      allyKnight.damageMarks.push({ cardId: "d1", cardName: "Espada 6", amount: 6, kind: "puro", sourceWeapon: "Espada" });
+      battle.players.p1.field = [mage];
+      battle.players.p3.field = [allyKnight];
+
+      const result = applyBattleAction(battle, "p1", {
+        type: "USE_POWER_CARD",
+        payload: {
+          cardId: "poder-sanacion",
+          sourceUnitId: mage.instanceId,
+          targetUnitId: allyKnight.instanceId,
+        },
+      });
+
+      assert.equal(result.players.p3.field[0].damageTaken, 0);
+      assert.equal(result.players.p3.field[0].damageMarks.length, 0);
+    },
+  },
+  {
+    name: "poder de arquero solo afecta a enemigos",
+    run: () => {
+      const battle = crearBatalla(createPlayers(2), "individual", 1);
+      battle.phase = "TURN_ATTACK";
+      battle.activePlayerId = "p1";
+      battle.players.p1.hand = [special("poder-arquero", "Poder")];
+      const archer = crearUnidadDesdeCarta(warrior("arq-4", "Arquero"), battle.currentTurn);
+      const enemyMage = crearUnidadDesdeCarta(warrior("mago-rival", "Mago"), battle.currentTurn);
+      battle.players.p1.field = [archer];
+      battle.players.p2.field = [enemyMage];
+
+      const result = applyBattleAction(battle, "p1", {
+        type: "USE_POWER_CARD",
+        payload: {
+          cardId: "poder-arquero",
+          sourceUnitId: archer.instanceId,
+          targetUnitId: enemyMage.instanceId,
+        },
+      });
+
+      assert.equal(result.players.p2.field.length, 0);
+      assert.equal(result.players.p2.cemetery.length, 1);
+    },
+  },
+  {
+    name: "espia puede ver el mazo central y la mano rival",
+    run: () => {
+      const battle = crearBatalla(createPlayers(2), "individual", 1);
+      battle.phase = "TURN_SABOTAGE";
+      battle.activePlayerId = "p1";
+      battle.centralDeck = [gold("oro-a", 1), gold("oro-b", 2), gold("oro-c", 3), gold("oro-d", 4), gold("oro-e", 5), gold("oro-f", 6)];
+      battle.players.p1.hand = [special("espia-mazo", "Espia")];
+      battle.players.p2.hand = [gold("oro-rival", 7), weapon("espada-rival", "Espada", 4)];
+
+      const afterDeckSpy = applyBattleAction(battle, "p1", {
+        type: "USE_SPY",
+        payload: {
+          cardId: "espia-mazo",
+          targetDeck: true,
+        },
+      });
+
+      assert.equal(afterDeckSpy.players.p1.pendingSpy?.source, "deck");
+      assert.equal(afterDeckSpy.players.p1.pendingSpy?.cards.length, 5);
+
+      afterDeckSpy.phase = "TURN_SABOTAGE";
+      afterDeckSpy.activePlayerId = "p1";
+      afterDeckSpy.players.p1.hand = [special("espia-mano", "Espia")];
+
+      const afterHandSpy = applyBattleAction(afterDeckSpy, "p1", {
+        type: "USE_SPY",
+        payload: {
+          cardId: "espia-mano",
+          targetPlayerId: "p2",
+        },
+      });
+
+      assert.equal(afterHandSpy.players.p1.pendingSpy?.source, "hand");
+      assert.equal(afterHandSpy.players.p1.pendingSpy?.targetPlayerId, "p2");
+      assert.equal(afterHandSpy.players.p1.pendingSpy?.cards.length, 2);
+    },
+  },
+  {
+    name: "castillo compartido en alianzas se sincroniza",
+    run: () => {
+      const battle = crearBatalla(createPlayers(4, "alianzas"), "alianzas", 1);
+      battle.phase = "TURN_BUILD";
+      battle.activePlayerId = "p1";
+      battle.players.p1.hand = [gold("reliquia-oro-1", 1)];
+
+      const afterRelic = applyBattleAction(battle, "p1", {
+        type: "BUILD_RELIC",
+        payload: { cardId: "reliquia-oro-1", targetPlayerId: "p1" },
+      });
+
+      assert.equal(afterRelic.players.p1.castle.reliquia?.id, "reliquia-oro-1");
+      assert.equal(afterRelic.players.p3.castle.reliquia?.id, "reliquia-oro-1");
+
+      afterRelic.phase = "TURN_BUILD";
+      afterRelic.activePlayerId = "p3";
+      afterRelic.players.p3.hand = [gold("oro-build-5", 5)];
+
+      const afterGold = applyBattleAction(afterRelic, "p3", {
+        type: "BUILD_CASTLE_CARD",
+        payload: { cardId: "oro-build-5", targetPlayerId: "p3" },
+      });
+
+      assert.equal(afterGold.players.p1.castle.oroConstruido, 6);
+      assert.equal(afterGold.players.p3.castle.oroConstruido, 6);
+      assert.equal(afterGold.players.p1.castle.cards.length, 1);
+      assert.equal(afterGold.players.p3.castle.cards.length, 1);
     },
   },
   {

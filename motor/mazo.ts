@@ -1,4 +1,3 @@
-import { v4 as uuid } from "uuid";
 import {
   COMPATIBILIDAD_ARMA,
   ESPECIALES,
@@ -10,6 +9,7 @@ import {
   VIDA_POR_GUERRERO,
   objetivoCastilloPorModo,
 } from "./constantes";
+import { crearId } from "./id";
 import type {
   BattleState,
   Carta,
@@ -44,7 +44,7 @@ export function crearMazoGuerreros(): CartaGuerrero[] {
   return mezclar(
     PLANTILLAS_GUERREROS.flatMap((plantilla) =>
       Array.from({ length: plantilla.cantidad }, () => ({
-        id: uuid(),
+        id: crearId("card"),
         tipo: "guerrero" as const,
         nombre: plantilla.guerrero,
         guerrero: plantilla.guerrero,
@@ -56,7 +56,7 @@ export function crearMazoGuerreros(): CartaGuerrero[] {
 export function crearMazoRecursos(): Carta[] {
   const armas: CartaArma[] = PLANTILLAS_ARMAS.flatMap((plantilla) =>
     Array.from({ length: plantilla.cantidad }, () => ({
-      id: uuid(),
+      id: crearId("card"),
       tipo: "arma" as const,
       nombre: `${plantilla.arma} ${plantilla.valor}`,
       arma: plantilla.arma,
@@ -66,7 +66,7 @@ export function crearMazoRecursos(): Carta[] {
   );
 
   const oro: CartaOro[] = VALORES_ORO.map((valor) => ({
-    id: uuid(),
+    id: crearId("card"),
     tipo: "oro" as const,
     nombre: `Oro ${valor}`,
     valor,
@@ -74,7 +74,7 @@ export function crearMazoRecursos(): Carta[] {
 
   const especiales: CartaEspecial[] = ESPECIALES.flatMap((plantilla) =>
     Array.from({ length: plantilla.cantidad }, () => ({
-      id: uuid(),
+      id: crearId("card"),
       tipo: "especial" as const,
       nombre: plantilla.especial,
       especial: plantilla.especial,
@@ -88,7 +88,7 @@ export function crearUnidadDesdeCarta(carta: CartaGuerrero | CartaEspecial, curr
   const guerrero: TipoGuerrero = carta.tipo === "especial" ? "Dragon" : carta.guerrero;
 
   return {
-    instanceId: uuid(),
+    instanceId: crearId("unit"),
     sourceCardId: carta.id,
     guerrero,
     vida: VIDA_POR_GUERRERO[guerrero],
@@ -179,14 +179,22 @@ export function crearBatalla(players: MatchPlayer[], modo: ModoJuego, battleNumb
   }
 
   const turnOrder = players.map((player) => player.playerId);
+  const initiativeRolls = Object.fromEntries(turnOrder.map((playerId) => [playerId, null])) as Record<string, number | null>;
   return {
-    id: uuid(),
+    id: crearId("battle"),
     battleNumber,
-    phase: "INITIAL_DEPLOY",
-    activePlayerId: turnOrder[startingPlayerIndex] ?? null,
+    phase: "BATTLE_INITIATIVE",
+    activePlayerId: null,
     turnOrder,
     currentTurn: 1,
     startingPlayerIndex,
+    initiative: {
+      contenders: [...turnOrder],
+      rolls: initiativeRolls,
+      winnerPlayerId: null,
+      round: 1,
+      status: "rolling",
+    },
     players: battlePlayers,
     centralDeck: mezclar([...warriorDeck, ...resourceDeck]),
     discardPile: [],
