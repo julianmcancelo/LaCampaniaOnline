@@ -91,7 +91,7 @@ function PantallaConfiguracion({
     <main
       style={{
         minHeight: "100vh",
-        background: "#050e09",
+        background: "#080f0c",
         display: "flex",
         flexDirection: "column",
         alignItems: "center",
@@ -101,7 +101,7 @@ function PantallaConfiguracion({
       }}
     >
       {/* Navbar mínimo */}
-      <div style={{ position: "fixed", top: 0, left: 0, right: 0, zIndex: 50, display: "flex", alignItems: "center", gap: 12, padding: "16px 24px", backdropFilter: "blur(20px)", background: "rgba(5,14,9,0.85)", borderBottom: "1px solid rgba(212,160,23,0.08)" }}>
+      <div style={{ position: "fixed", top: 0, left: 0, right: 0, zIndex: 50, display: "flex", alignItems: "center", gap: 12, padding: "16px 24px", backdropFilter: "blur(20px)", background: "rgba(8,15,12,0.88)", borderBottom: "1px solid rgba(198,139,71,0.12)" }}>
         <button
           type="button"
           onClick={() => router.push("/vestibulo")}

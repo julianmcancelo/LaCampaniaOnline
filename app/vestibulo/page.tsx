@@ -1,39 +1,52 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import { ArrowRight, ArrowLeft, Users, Swords, Shield, RefreshCw, CheckCircle, Circle, Wifi, WifiOff, Hash, Crown, Handshake, Bot, Zap } from "lucide-react";
+import { AnimatePresence, motion } from "framer-motion";
+import { ArrowLeft, ArrowRight, Bot, Crown, Handshake, RefreshCw, Shield, Swords, Users, Wifi, WifiOff } from "lucide-react";
+import { usarEstadoJuego } from "../../ganchos/usarEstadoJuego";
 import { usarSocket } from "../../ganchos/usarSocket";
 import { obtenerSocket } from "../../lib/socket";
-import { usarEstadoJuego } from "../../ganchos/usarEstadoJuego";
+import { GAME_BRAND, GAME_TAGLINE } from "../../lib/lore";
 import type { EquipoId, ModoJuego } from "../../motor/tipos";
 
 const modosSala = [
-  { id: "duelo", titulo: "Duelo", subtitulo: "1 vs 1", descripcion: "El enfrentamiento más directo. Un mano a mano donde cada decisión pesa el doble.", icono: Swords, mode: "individual" as ModoJuego, maxJugadores: 2, teamId: null, acento: "#fb923c", fondo: "rgba(251,146,60,0.06)", borde: "rgba(251,146,60,0.18)" },
-  { id: "escuadra", titulo: "Escuadra", subtitulo: "3 jugadores", descripcion: "Tres comandantes, un solo trono. Las alianzas son tan peligrosas como los enemigos.", icono: Users, mode: "individual" as ModoJuego, maxJugadores: 3, teamId: null, acento: "#818cf8", fondo: "rgba(129,140,248,0.06)", borde: "rgba(129,140,248,0.18)" },
-  { id: "consejo", titulo: "Consejo", subtitulo: "4 jugadores", descripcion: "Cuatro frentes abiertos. El caos es tu aliado si sabés manejarlo.", icono: Crown, mode: "individual" as ModoJuego, maxJugadores: 4, teamId: null, acento: "#fbbf24", fondo: "rgba(251,191,36,0.06)", borde: "rgba(251,191,36,0.18)" },
-  { id: "alianzas", titulo: "Alianzas", subtitulo: "2 vs 2", descripcion: "La coordinación lo es todo. Ganás con tu compañero o caen juntos.", icono: Handshake, mode: "alianzas" as ModoJuego, maxJugadores: 4, teamId: "A" as EquipoId, acento: "#34d399", fondo: "rgba(52,211,153,0.06)", borde: "rgba(52,211,153,0.18)" },
+  { id: "duelo", titulo: "Duelo", detalle: "1 paisano contra 1", texto: "La forma mas seca y directa de medir mano, lectura y coraje.", mode: "individual" as ModoJuego, maxJugadores: 2, teamId: null, acento: "#d89b45", icono: Swords },
+  { id: "escuadra", titulo: "Rueda de 3", detalle: "Todos contra todos", texto: "Tres frentes abiertos en una sola mesa. Pesa mucho la oportunidad.", mode: "individual" as ModoJuego, maxJugadores: 3, teamId: null, acento: "#c77735", icono: Users },
+  { id: "consejo", titulo: "Rueda de 4", detalle: "Choque grande", texto: "Cuatro manos en danza. El que mide mejor el campo manda.", mode: "individual" as ModoJuego, maxJugadores: 4, teamId: null, acento: "#f0c77e", icono: Crown },
+  { id: "alianzas", titulo: "Alianzas", detalle: "2 contra 2", texto: "Se gana en yunta. Cada jugada tiene que hablar con la de tu companero.", mode: "alianzas" as ModoJuego, maxJugadores: 4, teamId: "A" as EquipoId, acento: "#b36b38", icono: Handshake },
 ];
 
-function Etiqueta({ texto }: { texto: string }) {
+function Kicker({ children }: { children: React.ReactNode }) {
   return (
-    <div className="flex items-center gap-3 mb-3">
-      <div style={{ width: 14, height: 1, background: "rgba(212,160,23,0.5)" }} />
-      <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.28em", textTransform: "uppercase" as const, color: "#d4a017" }}>{texto}</span>
+    <div className="mb-3 flex items-center gap-3">
+      <div style={{ width: 18, height: 1, background: "rgba(216,155,69,0.5)" }} />
+      <span style={{ fontSize: 10, letterSpacing: "0.28em", textTransform: "uppercase", color: "#d89b45", fontWeight: 700 }}>{children}</span>
     </div>
   );
 }
 
-function Divisor() {
-  return <div style={{ height: 1, background: "linear-gradient(90deg, transparent, rgba(212,160,23,0.2), transparent)" }} />;
+function Panel({ children }: { children: React.ReactNode }) {
+  return (
+    <div
+      className="rounded-[28px] p-5 sm:p-6"
+      style={{
+        background: "linear-gradient(180deg, rgba(29,20,15,0.86), rgba(13,17,14,0.94))",
+        border: "1px solid rgba(198,139,71,0.14)",
+        boxShadow: "0 24px 60px rgba(0,0,0,0.28)",
+      }}
+    >
+      {children}
+    </div>
+  );
 }
 
 export default function PaginaVestibulo() {
   usarSocket();
   const router = useRouter();
-  const { roomList, currentRoom, error, setError, connection, playerId } = usarEstadoJuego();
+  const { roomList, currentRoom, error, setError, connection } = usarEstadoJuego();
   const [nombre, setNombre] = useState("");
   const [nombreSala, setNombreSala] = useState("");
   const [modo, setModo] = useState<ModoJuego>("individual");
@@ -49,259 +62,389 @@ export default function PaginaVestibulo() {
   }, []);
 
   useEffect(() => {
-    if (currentRoom) router.push(`/sala/${currentRoom.id}`);
+    if (currentRoom) {
+      router.push(`/sala/${currentRoom.id}`);
+    }
   }, [currentRoom, router]);
 
   const salasDisponibles = useMemo(() => roomList.filter((r) => r.estado === "waiting"), [roomList]);
+  const conectado = connection === "connected";
+  const nombreValido = nombre.trim().length >= 2;
 
   function nombrePorDefecto(m: ModoJuego, j: number) {
-    if (m === "alianzas") return "Mesa de alianzas";
-    if (j === 2) return "Duelo de campaña";
-    if (j === 3) return "Consejo de guerra";
-    return "Mesa de batalla";
+    if (m === "alianzas") return "Ronda de fogon";
+    if (j === 2) return "Duelo del fortin";
+    if (j === 3) return "Rueda brava";
+    return "Mesa del pago";
   }
 
   function crearSala() {
     const n = nombre.trim();
-    if (n.length < 2) { setError("Ingresá un nombre de al menos 2 caracteres."); return; }
+    if (n.length < 2) {
+      setError("Ingresa un nombre de al menos 2 letras.");
+      return;
+    }
     setCargando("manual");
-    obtenerSocket().emit("room:create", { roomName: nombreSala.trim() || nombrePorDefecto(modo, modo === "alianzas" ? 4 : maxJugadores), displayName: n, mode: modo, maxPlayers: modo === "alianzas" ? 4 : maxJugadores, teamId: modo === "alianzas" ? equipo : null });
+    obtenerSocket().emit("room:create", {
+      roomName: nombreSala.trim() || nombrePorDefecto(modo, modo === "alianzas" ? 4 : maxJugadores),
+      displayName: n,
+      mode: modo,
+      maxPlayers: modo === "alianzas" ? 4 : maxJugadores,
+      teamId: modo === "alianzas" ? equipo : null,
+    });
   }
 
   function crearPreset(preset: (typeof modosSala)[0]) {
     const n = nombre.trim();
-    if (n.length < 2) { setError("Ingresá tu nombre antes de crear una sala."); return; }
+    if (n.length < 2) {
+      setError("Ingresa tu nombre antes de crear una sala.");
+      return;
+    }
     setCargando(preset.id);
-    obtenerSocket().emit("room:create", { roomName: preset.titulo, displayName: n, mode: preset.mode, maxPlayers: preset.maxJugadores, teamId: preset.mode === "alianzas" ? preset.teamId : null });
+    obtenerSocket().emit("room:create", {
+      roomName: preset.titulo,
+      displayName: n,
+      mode: preset.mode,
+      maxPlayers: preset.maxJugadores,
+      teamId: preset.mode === "alianzas" ? preset.teamId : null,
+    });
   }
 
   function unirseASala(idSala: string, modoSala: ModoJuego) {
     const n = nombre.trim();
-    if (n.length < 2) { setError("Ingresá tu nombre antes de unirte."); return; }
+    if (n.length < 2) {
+      setError("Ingresa tu nombre antes de unirte.");
+      return;
+    }
     setCargando(idSala);
     obtenerSocket().emit("room:join", { roomId: idSala, displayName: n, teamId: modoSala === "alianzas" ? equipo : null });
   }
 
-  const conectado = connection === "connected";
-  const nombreValido = nombre.trim().length >= 2;
-  const iBase: React.CSSProperties = { width: "100%", padding: "11px 14px", borderRadius: 10, fontFamily: "'Cinzel', Georgia, serif", fontSize: 13, color: "#e8dcc4", background: "rgba(4,10,7,0.8)", border: "1px solid rgba(212,160,23,0.12)", outline: "none" };
-  const panelBase: React.CSSProperties = { background: "rgba(13,35,24,0.45)", border: "1px solid rgba(212,160,23,0.1)", backdropFilter: "blur(16px)" };
+  const inputStyle: React.CSSProperties = {
+    width: "100%",
+    padding: "12px 14px",
+    borderRadius: 14,
+    fontFamily: "'Cinzel', Georgia, serif",
+    fontSize: 14,
+    color: "#f1dec0",
+    background: "rgba(21,14,10,0.88)",
+    border: "1px solid rgba(198,139,71,0.16)",
+    outline: "none",
+  };
 
   return (
-    <div style={{ background: "#050e09", color: "#e8dcc4", minHeight: "100vh" }}>
-      {/* Fondo */}
-      <div className="fixed inset-0 pointer-events-none" aria-hidden>
-        <div style={{ position: "absolute", top: "-10%", right: "5%", width: 700, height: 700, borderRadius: "50%", background: "radial-gradient(circle, rgba(13,35,24,0.6) 0%, transparent 70%)", filter: "blur(60px)" }} />
-        <div style={{ position: "absolute", bottom: 0, left: "-5%", width: 500, height: 500, borderRadius: "50%", background: "radial-gradient(circle, rgba(212,160,23,0.04) 0%, transparent 70%)", filter: "blur(50px)" }} />
-        <div style={{ position: "absolute", inset: 0, backgroundImage: "linear-gradient(rgba(212,160,23,0.025) 1px, transparent 1px), linear-gradient(90deg, rgba(212,160,23,0.025) 1px, transparent 1px)", backgroundSize: "80px 80px", maskImage: "radial-gradient(ellipse 60% 60% at 10% 20%, black 0%, transparent 80%)", WebkitMaskImage: "radial-gradient(ellipse 60% 60% at 10% 20%, black 0%, transparent 80%)" }} />
-      </div>
+    <div style={{ minHeight: "100vh", background: "#080f0c", color: "#f2dfbb" }}>
+      <div
+        className="fixed inset-0 pointer-events-none"
+        aria-hidden
+        style={{
+          background:
+            "radial-gradient(circle at 78% 14%, rgba(199,123,47,0.18), transparent 26%), radial-gradient(circle at 12% 72%, rgba(216,155,69,0.1), transparent 28%), linear-gradient(180deg, #15110d 0%, #101713 34%, #080f0c 100%)",
+        }}
+      />
 
-      {/* NAVBAR */}
-      <nav className="sticky top-0 z-50 flex items-center justify-between px-8 py-5" style={{ background: "rgba(5,14,9,0.85)", backdropFilter: "blur(24px)", WebkitBackdropFilter: "blur(24px)", borderBottom: "1px solid rgba(212,160,23,0.08)" }}>
-        <Link href="/"><motion.span className="cursor-pointer" style={{ fontFamily: "'Cinzel Decorative', Georgia, serif", fontSize: 14, color: "#f5d98a", letterSpacing: "0.08em" }} whileHover={{ opacity: 0.7 }}>La Campaña</motion.span></Link>
-        <div className="flex items-center gap-5">
-          <div className="flex items-center gap-2 px-3 py-1.5 rounded-full" style={{ background: conectado ? "rgba(52,211,153,0.08)" : "rgba(239,68,68,0.08)", border: `1px solid ${conectado ? "rgba(52,211,153,0.2)" : "rgba(239,68,68,0.2)"}` }}>
-            {conectado ? <Wifi size={11} color="#34d399" /> : <WifiOff size={11} color="#f87171" />}
-            <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.15em", textTransform: "uppercase", color: conectado ? "#6ee7b7" : "#fca5a5" }}>{conectado ? "En línea" : "Sin conexión"}</span>
+      <nav
+        className="sticky top-0 z-50 border-b px-5 py-4 sm:px-8"
+        style={{
+          backdropFilter: "blur(18px)",
+          WebkitBackdropFilter: "blur(18px)",
+          background: "linear-gradient(180deg, rgba(8,15,12,0.9), rgba(8,15,12,0.56))",
+          borderColor: "rgba(198,139,71,0.12)",
+        }}
+      >
+        <div className="mx-auto flex max-w-7xl items-center justify-between gap-4">
+          <Link href="/" className="flex items-center gap-3">
+            <Image src="/logo-gaucho-puro.png" alt={GAME_BRAND} width={38} height={38} style={{ borderRadius: 999 }} />
+            <div>
+              <div style={{ fontSize: 10, color: "#d89b45", letterSpacing: "0.24em", textTransform: "uppercase" }}>Frontera abierta</div>
+              <div style={{ fontFamily: "'Cinzel Decorative', Georgia, serif", fontSize: 16, color: "#f5d98a" }}>{GAME_BRAND}</div>
+            </div>
+          </Link>
+
+          <div className="flex items-center gap-3">
+            <div
+              className="rounded-full px-3 py-1.5"
+              style={{
+                background: conectado ? "rgba(67,129,94,0.16)" : "rgba(164,75,66,0.16)",
+                border: `1px solid ${conectado ? "rgba(96,180,126,0.22)" : "rgba(200,101,90,0.22)"}`,
+              }}
+            >
+              <div className="flex items-center gap-2">
+                {conectado ? <Wifi size={11} color="#7dcc72" /> : <WifiOff size={11} color="#f59a88" />}
+                <span style={{ fontSize: 10, letterSpacing: "0.16em", textTransform: "uppercase", color: conectado ? "#9ce39c" : "#f3b0a4", fontWeight: 700 }}>
+                  {conectado ? "En linea" : "Sin conexion"}
+                </span>
+              </div>
+            </div>
+            <Link href="/" className="flex items-center gap-2" style={{ color: "#b89d74", fontSize: 11, textTransform: "uppercase", letterSpacing: "0.12em" }}>
+              <ArrowLeft size={12} />
+              Inicio
+            </Link>
           </div>
-          <Link href="/"><motion.span className="flex items-center gap-2 cursor-pointer" style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "#3a5040", fontFamily: "'Cinzel', Georgia, serif" }} whileHover={{ color: "#8a9e92" }}><ArrowLeft size={12} /> Inicio</motion.span></Link>
         </div>
       </nav>
 
-      <main className="relative px-6 py-16 max-w-6xl mx-auto">
-        {/* HEADER */}
-        <motion.div className="mb-14" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}>
-          <div className="flex items-center gap-3 mb-4">
-            <div style={{ width: 16, height: 1, background: "rgba(212,160,23,0.5)" }} />
-            <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.28em", textTransform: "uppercase", color: "#d4a017" }}>Sala de comandantes</span>
+      <main className="relative mx-auto max-w-7xl px-5 py-12 sm:px-8">
+        <motion.div initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.55 }} className="mb-10">
+          <Kicker>Vestibulo del pago</Kicker>
+          <div className="grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
+            <div>
+              <h1 style={{ fontFamily: "'Cinzel Decorative', Georgia, serif", fontSize: "clamp(2.6rem,6vw,5rem)", lineHeight: 0.95, color: "#f7ddb0", maxWidth: "9ch" }}>
+                Arma tu rueda y entra al fortin.
+              </h1>
+              <p style={{ marginTop: 18, maxWidth: 560, color: "#c8b08a", fontSize: 16, lineHeight: 1.85 }}>
+                {GAME_TAGLINE} Crea una sala, invita paisanos y deja lista la mesa para un duelo, una rueda grande o una yunta de alianzas.
+              </p>
+            </div>
+
+            <Panel>
+              <Kicker>Tu nombre</Kicker>
+              <h2 style={{ fontFamily: "'Cinzel', Georgia, serif", fontSize: 22, color: "#efd2a0", marginBottom: 10 }}>Presencia de mesa</h2>
+              <input
+                value={nombre}
+                onChange={(e) => setNombre(e.target.value)}
+                placeholder="Como te dicen en el pago..."
+                maxLength={24}
+                style={{
+                  ...inputStyle,
+                  borderColor: nombreValido ? "rgba(216,155,69,0.34)" : "rgba(198,139,71,0.16)",
+                }}
+              />
+              {!nombreValido && nombre.length > 0 ? <p style={{ marginTop: 8, color: "#f3b0a4", fontSize: 12 }}>Minimo 2 letras.</p> : null}
+            </Panel>
           </div>
-          <h1 style={{ fontFamily: "'Cinzel Decorative', Georgia, serif", fontSize: "clamp(2.4rem, 6vw, 4.5rem)", fontWeight: 900, color: "#f5d98a", lineHeight: 1.0, textShadow: "0 0 60px rgba(212,160,23,0.12), 0 4px 20px rgba(0,0,0,0.9)", marginBottom: 14 }}>Vestíbulo</h1>
-          <p style={{ fontFamily: "'Cinzel', Georgia, serif", fontSize: 14, color: "#3a5040", lineHeight: 1.8, maxWidth: 380 }}>Elegí el modo de batalla, ingresá tu nombre y comenzá en segundos.</p>
         </motion.div>
 
-        {/* ERROR */}
         <AnimatePresence>
-          {error && (
-            <motion.div className="flex items-center justify-between gap-4 mb-6 px-5 py-4 rounded-xl" style={{ background: "rgba(90,14,14,0.5)", border: "1px solid rgba(180,50,50,0.3)" }} initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }}>
-              <span style={{ fontSize: 13, color: "#fca5a5" }}>{error}</span>
-              <button type="button" onClick={() => setError(null)} style={{ color: "#fca5a5", opacity: 0.6, fontSize: 20, lineHeight: 1, cursor: "pointer", background: "none", border: "none" }}>×</button>
+          {error ? (
+            <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="mb-6 flex items-center justify-between rounded-2xl px-5 py-4" style={{ background: "rgba(112,39,34,0.38)", border: "1px solid rgba(181,92,83,0.26)" }}>
+              <span style={{ color: "#f2b0a8", fontSize: 13 }}>{error}</span>
+              <button type="button" onClick={() => setError(null)} style={{ background: "none", border: "none", color: "#f2b0a8", fontSize: 22, cursor: "pointer" }}>
+                ×
+              </button>
             </motion.div>
-          )}
+          ) : null}
         </AnimatePresence>
 
-        <div className="grid lg:grid-cols-[1fr_340px] gap-8 items-start">
-          {/* COLUMNA PRINCIPAL */}
-          <div className="space-y-5">
-            {/* Nombre */}
-            <motion.div className="p-6 rounded-2xl" style={panelBase} initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.08 }}>
-              <Etiqueta texto="Tu identidad" />
-              <h2 style={{ fontFamily: "'Cinzel Decorative', Georgia, serif", fontSize: 18, color: "#e8dcc4", marginBottom: 12, fontWeight: 700 }}>Nombre de batalla</h2>
-              <input value={nombre} onChange={(e) => setNombre(e.target.value)} placeholder="Tu nombre en la campaña..." maxLength={24} style={{ ...iBase, fontSize: 15, padding: "13px 16px", border: `1px solid ${nombreValido ? "rgba(212,160,23,0.35)" : "rgba(212,160,23,0.12)"}`, transition: "border-color 0.2s" }} />
-              {nombre.length > 0 && !nombreValido && <p style={{ marginTop: 6, fontSize: 12, color: "#f87171" }}>Mínimo 2 caracteres.</p>}
-            </motion.div>
+        <div className="grid gap-8 lg:grid-cols-[1fr_320px]">
+          <div>
+            <div className="mb-5 flex gap-2 rounded-full p-1" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(198,139,71,0.1)" }}>
+              {[
+                { id: "crear", label: "Crear sala", icon: Swords },
+                { id: "unirse", label: `Unirse ${salasDisponibles.length ? `(${salasDisponibles.length})` : ""}`, icon: Users },
+                { id: "practica", label: "Practica", icon: Bot },
+              ].map((item) => {
+                const Icon = item.icon;
+                const active = tab === item.id;
+                return (
+                  <button
+                    key={item.id}
+                    type="button"
+                    onClick={() => setTab(item.id as typeof tab)}
+                    className="flex-1 rounded-full px-4 py-3"
+                    style={{
+                      background: active ? "linear-gradient(135deg, rgba(216,155,69,0.18), rgba(199,123,47,0.12))" : "transparent",
+                      border: active ? "1px solid rgba(216,155,69,0.24)" : "1px solid transparent",
+                      color: active ? "#f5d98a" : "#8f7b61",
+                      fontSize: 11,
+                      textTransform: "uppercase",
+                      letterSpacing: "0.12em",
+                      fontWeight: 700,
+                    }}
+                  >
+                    <span className="flex items-center justify-center gap-2">
+                      <Icon size={12} />
+                      {item.label}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
 
-            {/* Tabs */}
-            <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.16 }}>
-              <div className="flex gap-1 p-1 rounded-xl mb-5" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.05)" }}>
-                <button type="button" onClick={() => setTab("crear")} className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg transition-all duration-200" style={{ fontFamily: "'Cinzel', Georgia, serif", fontSize: 11, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", background: tab === "crear" ? "rgba(212,160,23,0.1)" : "transparent", color: tab === "crear" ? "#f5d98a" : "#2a3a30", border: tab === "crear" ? "1px solid rgba(212,160,23,0.25)" : "1px solid transparent" }}>
-                  <Swords size={11} strokeWidth={1.5} /> Crear sala
-                </button>
-                <button type="button" onClick={() => setTab("unirse")} className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg transition-all duration-200" style={{ fontFamily: "'Cinzel', Georgia, serif", fontSize: 11, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", background: tab === "unirse" ? "rgba(212,160,23,0.1)" : "transparent", color: tab === "unirse" ? "#f5d98a" : "#2a3a30", border: tab === "unirse" ? "1px solid rgba(212,160,23,0.25)" : "1px solid transparent" }}>
-                  <Users size={11} strokeWidth={1.5} /> Unirse {salasDisponibles.length > 0 && <span style={{ marginLeft: 4, padding: "1px 6px", borderRadius: 5, background: "rgba(212,160,23,0.15)", color: "#d4a017", fontSize: 9 }}>{salasDisponibles.length}</span>}
-                </button>
-                <button type="button" onClick={() => setTab("practica")} className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg transition-all duration-200" style={{ fontFamily: "'Cinzel', Georgia, serif", fontSize: 11, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", background: tab === "practica" ? "rgba(52,211,153,0.1)" : "transparent", color: tab === "practica" ? "#34d399" : "#2a3a30", border: tab === "practica" ? "1px solid rgba(52,211,153,0.25)" : "1px solid transparent" }}>
-                  <Bot size={11} strokeWidth={1.5} /> Práctica
-                </button>
-              </div>
-
-              <AnimatePresence mode="wait">
-                {tab === "crear" && (
-                  <motion.div key="crear" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} transition={{ duration: 0.22 }}>
-                    <div className="grid sm:grid-cols-2 gap-3 mb-5">
-                      {modosSala.map((preset, i) => {
-                        const Icono = preset.icono;
-                        const activo = cargando === preset.id;
-                        return (
-                          <motion.button key={preset.id} type="button" onClick={() => crearPreset(preset)} disabled={!!cargando} className="p-5 rounded-2xl text-left relative overflow-hidden" style={{ background: preset.fondo, border: `1px solid ${preset.borde}`, cursor: cargando ? "not-allowed" : "pointer", opacity: cargando && !activo ? 0.35 : 1 }} initial={{ opacity: 0, y: 14 }} animate={{ opacity: cargando && !activo ? 0.35 : 1, y: 0 }} transition={{ delay: i * 0.05 }} whileHover={!cargando ? { y: -3, borderColor: preset.acento + "55" } : {}} whileTap={!cargando ? { scale: 0.98 } : {}}>
-                            <div style={{ position: "absolute", top: 0, left: "10%", right: "10%", height: 1, background: `linear-gradient(90deg, transparent, ${preset.acento}50, transparent)` }} />
-                            <div className="flex items-center justify-between mb-3">
-                              <div style={{ width: 34, height: 34, borderRadius: 9, display: "flex", alignItems: "center", justifyContent: "center", background: `${preset.acento}15`, border: `1px solid ${preset.acento}30` }}>
-                                {activo ? <RefreshCw size={14} color={preset.acento} className="animate-spin" /> : <Icono size={14} color={preset.acento} strokeWidth={1.5} />}
-                              </div>
-                              <span style={{ fontSize: 9, fontWeight: 700, letterSpacing: "0.2em", textTransform: "uppercase", color: preset.acento, opacity: 0.65 }}>{preset.subtitulo}</span>
+            <AnimatePresence mode="wait">
+              {tab === "crear" ? (
+                <motion.div key="crear" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}>
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    {modosSala.map((preset) => {
+                      const Icon = preset.icono;
+                      const active = cargando === preset.id;
+                      return (
+                        <button
+                          key={preset.id}
+                          type="button"
+                          onClick={() => crearPreset(preset)}
+                          disabled={!!cargando}
+                          className="rounded-[26px] p-5 text-left"
+                          style={{
+                            background: "linear-gradient(180deg, rgba(30,20,15,0.85), rgba(14,18,15,0.92))",
+                            border: `1px solid ${active ? `${preset.acento}66` : "rgba(198,139,71,0.12)"}`,
+                            opacity: cargando && !active ? 0.45 : 1,
+                          }}
+                        >
+                          <div className="mb-3 flex items-center justify-between">
+                            <div className="flex h-10 w-10 items-center justify-center rounded-full" style={{ background: `${preset.acento}18`, border: `1px solid ${preset.acento}33` }}>
+                              {active ? <RefreshCw size={15} color={preset.acento} className="animate-spin" /> : <Icon size={15} color={preset.acento} />}
                             </div>
-                            <div style={{ fontFamily: "'Cinzel', Georgia, serif", fontSize: 14, fontWeight: 700, color: "#e8dcc4", marginBottom: 5 }}>{preset.titulo}</div>
-                            <p style={{ fontSize: 12, color: "#3a5040", lineHeight: 1.6 }}>{preset.descripcion}</p>
-                          </motion.button>
-                        );
-                      })}
-                    </div>
-                    <div className="p-5 rounded-2xl" style={{ background: "rgba(10,26,19,0.55)", border: "1px solid rgba(212,160,23,0.08)" }}>
-                      <Etiqueta texto="Configuración manual" />
-                      <div className="grid sm:grid-cols-2 gap-3 mb-4">
-                        <label className="block"><span style={{ display: "block", fontSize: 10, fontWeight: 700, letterSpacing: "0.2em", textTransform: "uppercase", color: "#3a5040", marginBottom: 7 }}>Nombre de sala</span><input value={nombreSala} onChange={(e) => setNombreSala(e.target.value)} placeholder="Opcional..." style={iBase} /></label>
-                        <label className="block"><span style={{ display: "block", fontSize: 10, fontWeight: 700, letterSpacing: "0.2em", textTransform: "uppercase", color: "#3a5040", marginBottom: 7 }}>Modo</span>
-                          <select value={modo} onChange={(e) => setModo(e.target.value as ModoJuego)} style={{ ...iBase, cursor: "pointer" }}><option value="individual">Individual</option><option value="alianzas">Alianzas (2 vs 2)</option></select>
-                        </label>
-                        {modo === "individual" && <label className="block"><span style={{ display: "block", fontSize: 10, fontWeight: 700, letterSpacing: "0.2em", textTransform: "uppercase", color: "#3a5040", marginBottom: 7 }}>Jugadores</span><select value={maxJugadores} onChange={(e) => setMaxJugadores(Number(e.target.value))} style={{ ...iBase, cursor: "pointer" }}>{[2,3,4,5].map((n) => <option key={n} value={n}>{n} jugadores</option>)}</select></label>}
-                        {modo === "alianzas" && <label className="block"><span style={{ display: "block", fontSize: 10, fontWeight: 700, letterSpacing: "0.2em", textTransform: "uppercase", color: "#3a5040", marginBottom: 7 }}>Equipo</span><select value={equipo} onChange={(e) => setEquipo(e.target.value as EquipoId)} style={{ ...iBase, cursor: "pointer" }}><option value="A">Equipo A</option><option value="B">Equipo B</option></select></label>}
-                      </div>
-                      <motion.button type="button" disabled={!nombreValido || !!cargando} onClick={crearSala} className="w-full flex items-center justify-center gap-2" style={{ padding: "12px 20px", borderRadius: 11, fontFamily: "'Cinzel', Georgia, serif", fontSize: 12, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "#f5d98a", background: "linear-gradient(160deg, rgba(36,94,74,0.9), rgba(18,54,38,0.95))", border: "1px solid rgba(212,160,23,0.3)", cursor: !nombreValido || !!cargando ? "not-allowed" : "pointer", opacity: !nombreValido ? 0.4 : 1 }} whileHover={nombreValido && !cargando ? { borderColor: "rgba(212,160,23,0.6)" } : {}} whileTap={nombreValido && !cargando ? { scale: 0.98 } : {}}>
-                        {cargando === "manual" ? <RefreshCw size={13} className="animate-spin" /> : <Swords size={13} strokeWidth={1.5} />} Crear sala personalizada
-                      </motion.button>
-                    </div>
-                  </motion.div>
-                )}
+                            <span style={{ color: preset.acento, fontSize: 10, letterSpacing: "0.18em", textTransform: "uppercase", fontWeight: 700 }}>{preset.detalle}</span>
+                          </div>
+                          <h3 style={{ fontFamily: "'Cinzel', Georgia, serif", color: "#efd2a0", fontSize: 22 }}>{preset.titulo}</h3>
+                          <p style={{ marginTop: 8, color: "#bca684", fontSize: 14, lineHeight: 1.7 }}>{preset.texto}</p>
+                        </button>
+                      );
+                    })}
+                  </div>
 
-                {tab === "unirse" && (
-                  <motion.div key="unirse" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} transition={{ duration: 0.22 }}>
-                    <div className="p-5 rounded-2xl" style={{ background: "rgba(10,26,19,0.55)", border: "1px solid rgba(212,160,23,0.08)" }}>
-                      <div className="flex items-center justify-between mb-5">
-                        <Etiqueta texto="Partidas disponibles" />
-                        <motion.button type="button" onClick={() => obtenerSocket().emit("room:list")} className="flex items-center gap-1.5" style={{ fontSize: 11, color: "#3a5040", cursor: "pointer", background: "none", border: "none" }} whileHover={{ color: "#d4a017" }} whileTap={{ rotate: 180 }} transition={{ duration: 0.3 }}><RefreshCw size={11} /> Actualizar</motion.button>
-                      </div>
-                      {salasDisponibles.length === 0 ? (
-                        <div className="py-14 text-center">
-                          <div className="w-12 h-12 rounded-2xl flex items-center justify-center mx-auto mb-4" style={{ background: "rgba(212,160,23,0.05)", border: "1px solid rgba(212,160,23,0.1)" }}><Users size={20} color="rgba(212,160,23,0.25)" strokeWidth={1.5} /></div>
-                          <p style={{ fontSize: 13, color: "#2a3a30", marginBottom: 14 }}>No hay partidas disponibles ahora mismo.</p>
-                          <motion.button type="button" onClick={() => setTab("crear")} className="inline-flex items-center gap-2" style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "#d4a017", cursor: "pointer", background: "none", border: "none", fontFamily: "'Cinzel', Georgia, serif" }} whileHover={{ gap: "10px" }}>Crear una sala <ArrowRight size={11} /></motion.button>
-                        </div>
+                  <Panel>
+                    <Kicker>Configuracion fina</Kicker>
+                    <div className="grid gap-4 sm:grid-cols-2">
+                      <label>
+                        <span style={{ display: "block", marginBottom: 8, fontSize: 10, textTransform: "uppercase", letterSpacing: "0.2em", color: "#b89d74" }}>Nombre de la sala</span>
+                        <input value={nombreSala} onChange={(e) => setNombreSala(e.target.value)} placeholder="Opcional..." style={inputStyle} />
+                      </label>
+
+                      <label>
+                        <span style={{ display: "block", marginBottom: 8, fontSize: 10, textTransform: "uppercase", letterSpacing: "0.2em", color: "#b89d74" }}>Modo</span>
+                        <select value={modo} onChange={(e) => setModo(e.target.value as ModoJuego)} style={inputStyle}>
+                          <option value="individual">Individual</option>
+                          <option value="alianzas">Alianzas</option>
+                        </select>
+                      </label>
+
+                      {modo === "individual" ? (
+                        <label>
+                          <span style={{ display: "block", marginBottom: 8, fontSize: 10, textTransform: "uppercase", letterSpacing: "0.2em", color: "#b89d74" }}>Jugadores</span>
+                          <select value={maxJugadores} onChange={(e) => setMaxJugadores(Number(e.target.value))} style={inputStyle}>
+                            {[2, 3, 4].map((n) => (
+                              <option key={n} value={n}>
+                                {n} jugadores
+                              </option>
+                            ))}
+                          </select>
+                        </label>
                       ) : (
-                        <div className="grid gap-3">
-                          {salasDisponibles.map((sala, i) => (
-                            <motion.button key={sala.id} type="button" onClick={() => unirseASala(sala.id, sala.modo)} disabled={!!cargando} className="w-full p-5 rounded-2xl text-left" style={{ background: "rgba(13,35,24,0.5)", border: "1px solid rgba(212,160,23,0.1)", cursor: cargando ? "not-allowed" : "pointer", opacity: cargando && cargando !== sala.id ? 0.35 : 1 }} initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.06 }} whileHover={!cargando ? { borderColor: "rgba(212,160,23,0.3)", x: 3 } : {}}>
-                              <div className="flex items-start justify-between gap-4">
-                                <div className="min-w-0">
-                                  <div style={{ fontFamily: "'Cinzel', Georgia, serif", fontSize: 14, fontWeight: 700, color: "#e8dcc4", marginBottom: 8 }}>{sala.nombre}</div>
-                                  <div className="flex flex-wrap gap-2">
-                                    <span style={{ padding: "3px 10px", borderRadius: 6, fontSize: 10, fontWeight: 700, letterSpacing: "0.15em", textTransform: "uppercase", background: "rgba(212,160,23,0.08)", color: "#d4a017", border: "1px solid rgba(212,160,23,0.15)" }}>{sala.modo}</span>
-                                    <span className="flex items-center gap-1" style={{ padding: "3px 10px", borderRadius: 6, fontSize: 10, fontWeight: 700, background: "rgba(52,211,153,0.07)", color: "#34d399", border: "1px solid rgba(52,211,153,0.15)" }}><Users size={9} /> {sala.players.length}/{sala.maxJugadores}</span>
-                                  </div>
-                                </div>
-                                {cargando === sala.id ? <RefreshCw size={15} color="#d4a017" className="animate-spin shrink-0 mt-1" /> : <ArrowRight size={15} color="rgba(212,160,23,0.25)" className="shrink-0 mt-1" />}
-                              </div>
-                              <div className="flex items-center gap-1.5 mt-3"><Hash size={9} color="#1a2a20" /><span style={{ fontSize: 10, fontFamily: "monospace", color: "#1a2a20" }}>{sala.id.slice(0, 8).toUpperCase()}</span></div>
-                            </motion.button>
-                          ))}
-                        </div>
+                        <label>
+                          <span style={{ display: "block", marginBottom: 8, fontSize: 10, textTransform: "uppercase", letterSpacing: "0.2em", color: "#b89d74" }}>Equipo</span>
+                          <select value={equipo} onChange={(e) => setEquipo(e.target.value as EquipoId)} style={inputStyle}>
+                            <option value="A">Equipo A</option>
+                            <option value="B">Equipo B</option>
+                          </select>
+                        </label>
                       )}
                     </div>
-                  </motion.div>
-                )}
-                {tab === "practica" && (
-                  <motion.div key="practica" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} transition={{ duration: 0.22 }}>
-                    <div className="p-6 rounded-2xl" style={{ background: "rgba(10,26,19,0.55)", border: "1px solid rgba(52,211,153,0.12)" }}>
-                      <div className="flex items-center gap-3 mb-5">
-                        <div style={{ width: 40, height: 40, borderRadius: 10, display: "flex", alignItems: "center", justifyContent: "center", background: "rgba(52,211,153,0.08)", border: "1px solid rgba(52,211,153,0.2)" }}>
-                          <Bot size={20} color="#34d399" />
-                        </div>
-                        <div>
-                          <div style={{ fontFamily: "'Cinzel', Georgia, serif", fontSize: 15, fontWeight: 700, color: "#e8dcc4", marginBottom: 2 }}>Modo Práctica vs CPU</div>
-                          <div style={{ fontSize: 11, color: "#2a3a30" }}>Sin conexión necesaria — corre 100% en tu navegador.</div>
-                        </div>
+
+                    <button
+                      type="button"
+                      onClick={crearSala}
+                      disabled={!nombreValido || !!cargando}
+                      className="mt-5 w-full rounded-full px-5 py-3"
+                      style={{
+                        background: "linear-gradient(135deg, #efb85b, #c46d2b)",
+                        color: "#1b1208",
+                        fontWeight: 800,
+                        letterSpacing: "0.12em",
+                        textTransform: "uppercase",
+                        opacity: !nombreValido || !!cargando ? 0.45 : 1,
+                      }}
+                    >
+                      {cargando === "manual" ? "Armando sala..." : "Crear sala personalizada"}
+                    </button>
+                  </Panel>
+                </motion.div>
+              ) : null}
+
+              {tab === "unirse" ? (
+                <motion.div key="unirse" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}>
+                  <Panel>
+                    <div className="mb-5 flex items-center justify-between">
+                      <Kicker>Salas abiertas</Kicker>
+                      <button type="button" onClick={() => obtenerSocket().emit("room:list")} style={{ background: "none", border: "none", color: "#d89b45", cursor: "pointer" }} className="flex items-center gap-2">
+                        <RefreshCw size={12} />
+                        Actualizar
+                      </button>
+                    </div>
+
+                    {salasDisponibles.length === 0 ? (
+                      <div className="py-14 text-center">
+                        <Users size={24} color="#7c694f" style={{ margin: "0 auto 14px" }} />
+                        <p style={{ color: "#b89d74", fontSize: 14 }}>No hay mesas abiertas por ahora.</p>
                       </div>
-                      <p style={{ fontSize: 13, color: "#3a5040", lineHeight: 1.7, marginBottom: 20 }}>
-                        Jugá partidas de entrenamiento contra la computadora. Elegí tu dificultad y practicá tus estrategias sin la presión del multijugador.
-                      </p>
-                      <div className="grid sm:grid-cols-3 gap-3 mb-6">
-                        {[
-                          { nivel: "Fácil", desc: "Jugadas al azar, ideal para aprender.", icono: Shield, acento: "#34d399" },
-                          { nivel: "Normal", desc: "Estrategia básica y ataque selectivo.", icono: Swords, acento: "#f5d98a" },
-                          { nivel: "Difícil", desc: "IA agresiva, espionaje y castillo óptimo.", icono: Zap, acento: "#f87171" },
-                        ].map(({ nivel, desc, icono: Icono, acento }) => (
-                          <div key={nivel} className="p-4 rounded-xl" style={{ background: `${acento}06`, border: `1px solid ${acento}18` }}>
-                            <Icono size={16} color={acento} style={{ marginBottom: 8 }} />
-                            <div style={{ fontSize: 12, fontWeight: 700, color: acento, fontFamily: "'Cinzel', Georgia, serif", marginBottom: 4 }}>{nivel}</div>
-                            <div style={{ fontSize: 11, color: "#2a3a30", lineHeight: 1.5 }}>{desc}</div>
-                          </div>
+                    ) : (
+                      <div className="grid gap-3">
+                        {salasDisponibles.map((sala) => (
+                          <button
+                            key={sala.id}
+                            type="button"
+                            onClick={() => unirseASala(sala.id, sala.modo)}
+                            disabled={!!cargando}
+                            className="rounded-[22px] p-4 text-left"
+                            style={{
+                              background: "rgba(255,245,228,0.03)",
+                              border: "1px solid rgba(198,139,71,0.1)",
+                              opacity: cargando && cargando !== sala.id ? 0.45 : 1,
+                            }}
+                          >
+                            <div className="flex items-start justify-between gap-4">
+                              <div>
+                                <div style={{ fontFamily: "'Cinzel', Georgia, serif", fontSize: 20, color: "#efd2a0" }}>{sala.nombre}</div>
+                                <div className="mt-2 flex flex-wrap gap-2">
+                                  <span style={{ padding: "4px 10px", borderRadius: 999, background: "rgba(216,155,69,0.12)", color: "#d89b45", fontSize: 10, textTransform: "uppercase", letterSpacing: "0.15em" }}>{sala.modo}</span>
+                                  <span style={{ padding: "4px 10px", borderRadius: 999, background: "rgba(255,255,255,0.05)", color: "#c8b08a", fontSize: 10 }}>
+                                    {sala.players.length}/{sala.maxJugadores}
+                                  </span>
+                                </div>
+                              </div>
+                              <ArrowRight size={16} color="#d89b45" />
+                            </div>
+                          </button>
                         ))}
                       </div>
-                      <Link href="/local" style={{ textDecoration: "none" }}>
-                        <motion.div className="flex items-center justify-center gap-3 py-4 rounded-xl cursor-pointer" style={{ background: "linear-gradient(135deg, rgba(52,211,153,0.12), rgba(16,66,48,0.5))", border: "1px solid rgba(52,211,153,0.3)", fontFamily: "'Cinzel Decorative', Georgia, serif", fontSize: 14, fontWeight: 900, color: "#34d399", letterSpacing: "0.06em" }} whileHover={{ borderColor: "rgba(52,211,153,0.6)", background: "linear-gradient(135deg, rgba(52,211,153,0.18), rgba(16,66,48,0.6))" }} whileTap={{ scale: 0.98 }}>
-                          <Bot size={16} />
-                          Iniciar práctica
-                          <ArrowRight size={14} />
-                        </motion.div>
-                      </Link>
-                    </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </motion.div>
+                    )}
+                  </Panel>
+                </motion.div>
+              ) : null}
+
+              {tab === "practica" ? (
+                <motion.div key="practica" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}>
+                  <Panel>
+                    <Kicker>Duelo de entrenamiento</Kicker>
+                    <h3 style={{ fontFamily: "'Cinzel', Georgia, serif", fontSize: 24, color: "#efd2a0" }}>Prueba la mesa en local</h3>
+                    <p style={{ marginTop: 10, color: "#bca684", fontSize: 15, lineHeight: 1.8 }}>
+                      Afina lectura, ritmo y orden de jugadas contra la CPU antes de pasar a la rueda online.
+                    </p>
+                    <Link href="/local" className="mt-5 inline-flex items-center gap-2 rounded-full px-6 py-3" style={{ background: "linear-gradient(135deg, #efb85b, #c46d2b)", color: "#1b1208", fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.12em" }}>
+                      Ir a practica
+                      <ArrowRight size={14} />
+                    </Link>
+                  </Panel>
+                </motion.div>
+              ) : null}
+            </AnimatePresence>
           </div>
 
-          {/* SIDEBAR */}
-          <motion.aside className="space-y-4" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.6, delay: 0.22 }}>
-            <div className="p-5 rounded-2xl" style={{ ...panelBase }}>
-              <Etiqueta texto="Tu sesión" />
-              <div className="space-y-3">
-                <div className="flex items-center justify-between"><span style={{ fontSize: 12, color: "#2a3a30" }}>Estado</span><div className="flex items-center gap-2"><div style={{ width: 6, height: 6, borderRadius: "50%", background: conectado ? "#34d399" : "#f87171", boxShadow: conectado ? "0 0 8px #34d399" : "none" }} /><span style={{ fontSize: 12, fontWeight: 700, color: conectado ? "#6ee7b7" : "#fca5a5" }}>{conectado ? "En línea" : "Desconectado"}</span></div></div>
-                <Divisor />
-                <div className="flex items-center justify-between"><span style={{ fontSize: 12, color: "#2a3a30" }}>Salas abiertas</span><span style={{ fontFamily: "'Cinzel Decorative', Georgia, serif", fontSize: 22, fontWeight: 900, color: "#f5d98a", textShadow: "0 0 20px rgba(212,160,23,0.2)" }}>{salasDisponibles.length}</span></div>
+          <div className="space-y-4">
+            <Panel>
+              <Kicker>Estado de rueda</Kicker>
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <span style={{ color: "#b89d74", fontSize: 13 }}>Conexion</span>
+                  <span style={{ color: conectado ? "#9ce39c" : "#f3b0a4", fontWeight: 700 }}>{conectado ? "Activa" : "Caida"}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span style={{ color: "#b89d74", fontSize: 13 }}>Mesas esperando</span>
+                  <span style={{ color: "#f5d98a", fontFamily: "'Cinzel Decorative', Georgia, serif", fontSize: 26 }}>{salasDisponibles.length}</span>
+                </div>
               </div>
-            </div>
+            </Panel>
 
-            <div className="p-5 rounded-2xl" style={{ ...panelBase }}>
-              <Etiqueta texto="Recordatorio" />
-              <ul className="space-y-3">
-                {[{ icono: CheckCircle, texto: "7 cartas aleatorias al inicio.", color: "#34d399" }, { icono: Shield, texto: "Bajá 1 guerrero antes del primer turno.", color: "#818cf8" }, { icono: Swords, texto: "5 acciones por turno.", color: "#fb923c" }, { icono: Crown, texto: "25 de Oro o eliminá a todos.", color: "#fbbf24" }].map(({ icono: Icono, texto, color }, i) => (
-                  <li key={i} className="flex items-start gap-3"><Icono size={13} color={color} strokeWidth={1.5} style={{ flexShrink: 0, marginTop: 2 }} /><span style={{ fontSize: 12, color: "#2a3a30", lineHeight: 1.6 }}>{texto}</span></li>
-                ))}
+            <Panel>
+              <Kicker>Regla rapida</Kicker>
+              <ul className="space-y-3" style={{ color: "#bca684", fontSize: 14, lineHeight: 1.7 }}>
+                <li className="flex gap-3"><Shield size={14} color="#d89b45" style={{ marginTop: 4 }} />Alza 25 de plata en tu fortin o barre la mesa rival.</li>
+                <li className="flex gap-3"><Swords size={14} color="#d89b45" style={{ marginTop: 4 }} />Cada fase pesa: leva, cruce, sabotaje, trueque y fortin.</li>
+                <li className="flex gap-3"><Users size={14} color="#d89b45" style={{ marginTop: 4 }} />En alianzas la lectura del companero vale tanto como la propia.</li>
               </ul>
-            </div>
-
-            <div className="p-5 rounded-2xl" style={{ ...panelBase }}>
-              <Etiqueta texto="Modalidades" />
-              <div className="space-y-2">
-                {[{ label: "Individual", desc: "Todos contra todos. 2–5 jugadores.", acento: "#fb923c" }, { label: "Alianzas", desc: "2 vs 2. Ganás con tu equipo.", acento: "#34d399" }].map((m, i) => (
-                  <div key={i} className="flex items-start gap-3 p-3 rounded-xl" style={{ background: `${m.acento}08`, border: `1px solid ${m.acento}18` }}>
-                    <Circle size={5} color={m.acento} fill={m.acento} style={{ flexShrink: 0, marginTop: 5 }} />
-                    <div><div style={{ fontSize: 12, fontWeight: 700, color: m.acento }}>{m.label}</div><div style={{ fontSize: 11, color: "#2a3a30", marginTop: 2 }}>{m.desc}</div></div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </motion.aside>
+            </Panel>
+          </div>
         </div>
       </main>
     </div>

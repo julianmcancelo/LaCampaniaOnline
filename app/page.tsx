@@ -59,6 +59,24 @@ const modos = [
   },
 ];
 
+const leyenda = [
+  {
+    titulo: "La frontera no perdona",
+    texto:
+      "Mas alla de la ley del hombre, la llanura decide a quien deja seguir. Cada duelo se juega entre barro, plata y noches cargadas de presagios.",
+  },
+  {
+    titulo: "Fortines contra la noche",
+    texto:
+      "Los fortines guardan memoria, riqueza y orgullo. Quien junte la plata suficiente o incendie la defensa rival se queda con el nombre de la frontera.",
+  },
+  {
+    titulo: "Paisanos y criaturas viejas",
+    texto:
+      "Gauchos, Rastreros, Curanderos y hasta el Lobizon pisan la mesa. Aca el coraje vale tanto como la astucia para leer el campo.",
+  },
+];
+
 function SectionReveal({
   children,
   delay = 0,
@@ -443,6 +461,90 @@ export default function PaginaInicio() {
             </div>
           </div>
         </SectionReveal>
+      </section>
+
+      <section
+        className="px-5 py-24 sm:px-8"
+        style={{
+          background:
+            "radial-gradient(circle at 50% 0%, rgba(215,143,62,0.12), transparent 34%), linear-gradient(180deg, rgba(20,13,10,0.98), rgba(9,13,11,1))",
+          borderTop: "1px solid rgba(196,109,43,0.14)",
+          borderBottom: "1px solid rgba(196,109,43,0.14)",
+        }}
+      >
+        <div className="mx-auto grid max-w-6xl gap-14 lg:grid-cols-[0.9fr_1.1fr]">
+          <SectionReveal>
+            <div>
+              <p
+                style={{
+                  color: "#cf9645",
+                  fontSize: 12,
+                  letterSpacing: "0.28em",
+                  textTransform: "uppercase",
+                  fontWeight: 700,
+                  marginBottom: 14,
+                }}
+              >
+                El lore
+              </p>
+              <h2
+                style={{
+                  fontFamily: "'Cinzel Decorative', Georgia, serif",
+                  fontSize: "clamp(2.1rem, 4vw, 3.9rem)",
+                  lineHeight: 1.02,
+                  color: "#f2d6a4",
+                  maxWidth: 460,
+                }}
+              >
+                Una pampa mitica, hecha de plata, humo y silencios bravos.
+              </h2>
+              <p
+                style={{
+                  color: "#c8b08a",
+                  lineHeight: 1.85,
+                  fontSize: 16,
+                  maxWidth: 440,
+                  marginTop: 18,
+                }}
+              >
+                Sangre y Plata toma la historia del campo argentino y la cruza con supersticion rural. No cambia las reglas del duelo: cambia el pulso de todo lo que ves.
+              </p>
+            </div>
+          </SectionReveal>
+
+          <div className="grid gap-8">
+            {leyenda.map((item, index) => (
+              <SectionReveal key={item.titulo} delay={0.08 * index}>
+                <div
+                  className="grid gap-3 border-l pl-6"
+                  style={{
+                    borderColor: "rgba(196,109,43,0.24)",
+                  }}
+                >
+                  <h3
+                    style={{
+                      fontFamily: "'Cinzel', Georgia, serif",
+                      fontSize: 24,
+                      color: "#efd2a0",
+                    }}
+                  >
+                    {item.titulo}
+                  </h3>
+                  <p
+                    style={{
+                      color: "#c7b08a",
+                      lineHeight: 1.8,
+                      fontSize: 16,
+                      maxWidth: 620,
+                    }}
+                  >
+                    {item.texto}
+                  </p>
+                </div>
+              </SectionReveal>
+            ))}
+          </div>
+        </div>
       </section>
 
       <section
