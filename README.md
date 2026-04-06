@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="./.github/assets/readme-hero.svg" alt="La Campaña Online" width="100%" />
+  <img src="./.github/assets/readme-hero.svg" alt="Sangre y Plata" width="100%" />
 </p>
 
 <p align="center">
@@ -10,8 +10,8 @@
 </p>
 
 <p align="center">
-  Versión online de <strong>La Campaña</strong> con salas multijugador, motor de reglas propio,
-  reconexión por <code>playerId</code> y una mesa táctica pensada para jugar desde navegador.
+  Version online de <strong>Sangre y Plata</strong> con salas multijugador, motor de reglas propio,
+  reconexion por <code>playerId</code> y una mesa tactica pensada para jugar desde navegador.
 </p>
 
 ## Qué incluye
@@ -121,7 +121,7 @@ npm run test
 - despliegue inicial de guerreros
 - combate, sabotaje, comercio y castillo
 - cierre de sala por anfitrión
-- base visual medieval con tablero táctico
+- identidad criolla de frontera con fortines, plata y supersticion rural
 
 ## Verificación
 

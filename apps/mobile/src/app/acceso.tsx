@@ -94,7 +94,7 @@ export default function PantallaAcceso() {
       <LinearGradient colors={["#07130f", "#10251c", "#0b1813"]} style={styles.root}>
         <View style={[styles.hero, compact ? styles.heroCompact : null]}>
           <View style={styles.brandColumn}>
-            <Image source={require("../../../../public/logo-gaucho-puro.png")} style={styles.logo} resizeMode="contain" />
+            <Image source={require("../../assets/images/logo-gaucho-puro.png")} style={styles.logo} resizeMode="contain" />
             <Text style={styles.eyebrow}>Acceso a la frontera</Text>
             <Text style={styles.brand}>{GAME_BRAND}</Text>
             <Text style={styles.copy}>

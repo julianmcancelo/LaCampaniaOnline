@@ -250,16 +250,29 @@ export default function PaginaInicio() {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6, delay: 0.2 }}
       >
-        <span
-          style={{
-            fontFamily: "'Cinzel Decorative', Georgia, serif",
-            fontSize: 14,
-            color: "#f5d98a",
-            letterSpacing: "0.08em",
-          }}
-        >
-          La Campaña
-        </span>
+        <div className="flex items-center gap-3">
+          <Image
+            src="/logo-gaucho-puro.png"
+            alt={GAME_BRAND}
+            width={40}
+            height={40}
+            style={{
+              borderRadius: 999,
+              boxShadow: "0 8px 28px rgba(0,0,0,0.28)",
+              border: "1px solid rgba(212,160,23,0.25)",
+            }}
+          />
+          <span
+            style={{
+              fontFamily: "'Cinzel Decorative', Georgia, serif",
+              fontSize: 14,
+              color: "#f5d98a",
+              letterSpacing: "0.08em",
+            }}
+          >
+            {GAME_BRAND}
+          </span>
+        </div>
         <Link href="/vestibulo">
           <motion.span
             className="flex items-center gap-2 cursor-pointer"
@@ -337,6 +350,26 @@ export default function PaginaInicio() {
             <EtiquetaSeccion texto="Juego de cartas estratégico" />
           </motion.div>
 
+          <motion.div
+            className="mx-auto mb-6"
+            initial={{ opacity: 0, y: 20, scale: 0.92 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            transition={{ duration: 0.8, delay: 0.38, ease: [0.22, 1, 0.36, 1] }}
+          >
+            <Image
+              src="/logo-gaucho-puro.png"
+              alt={GAME_BRAND}
+              width={152}
+              height={152}
+              priority
+              style={{
+                borderRadius: 999,
+                boxShadow:
+                  "0 20px 60px rgba(0,0,0,0.45), 0 0 0 1px rgba(212,160,23,0.18)",
+              }}
+            />
+          </motion.div>
+
           <motion.h1
             style={{
               fontFamily: "'Cinzel Decorative', Georgia, serif",
@@ -354,7 +387,7 @@ export default function PaginaInicio() {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             transition={{ duration: 0.9, delay: 0.45, ease: [0.22, 1, 0.36, 1] }}
           >
-            La Campaña
+            {GAME_BRAND}
           </motion.h1>
 
           <motion.p
@@ -370,7 +403,7 @@ export default function PaginaInicio() {
             animate={{ opacity: 1 }}
             transition={{ duration: 0.7, delay: 0.7 }}
           >
-            Online
+            Frontera Online
           </motion.p>
 
           <motion.div
@@ -395,8 +428,8 @@ export default function PaginaInicio() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.7, delay: 1.0 }}
           >
-            Reclutá guerreros, equipalos con armas y dominá el campo de batalla
-            en tiempo real contra jugadores de todo el país.
+            Reuni tu rueda de frontera, armá el fortín y peleá por Plata en
+            duelos tácticos online con barro, superstición rural y coraje criollo.
           </motion.p>
 
           <motion.div
@@ -1081,7 +1114,7 @@ export default function PaginaInicio() {
             letterSpacing: "0.06em",
           }}
         >
-          La Campaña
+          {GAME_BRAND}
         </span>
         <span
           style={{
@@ -1091,7 +1124,7 @@ export default function PaginaInicio() {
             textTransform: "uppercase",
           }}
         >
-          Juego de mesa argentino — versión online
+          Juego tactico argentino de fortines y frontera
         </span>
       </footer>
     </div>
