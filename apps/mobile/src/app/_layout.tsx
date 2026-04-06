@@ -11,6 +11,7 @@ import { useProfileStore } from "../store/profile-store";
 function BootGate({ children }: { children: ReactNode }) {
   const hydrated = useProfileStore((state) => state.hydrated);
   const initialize = useProfileStore((state) => state.initialize);
+  const orientationPreference = useProfileStore((state) => state.profile?.preferencias.phoneOrientationPreference);
 
   useEffect(() => {
     void initialize();
@@ -23,11 +24,22 @@ function BootGate({ children }: { children: ReactNode }) {
         await ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.LANDSCAPE);
         return;
       }
+
+      if (orientationPreference === "landscape") {
+        await ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.LANDSCAPE);
+        return;
+      }
+
+      if (orientationPreference === "auto") {
+        await ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.DEFAULT);
+        return;
+      }
+
       await ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.PORTRAIT_UP);
     }
 
     void syncOrientation();
-  }, []);
+  }, [orientationPreference]);
 
   if (!hydrated) {
     return (

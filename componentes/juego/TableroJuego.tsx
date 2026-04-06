@@ -8,8 +8,12 @@ import { usarSocket } from "../../ganchos/usarSocket";
 import { obtenerSocket } from "../../lib/socket";
 import type { BattleAction, Carta, UnitInPlay } from "../../motor/tipos";
 
-function enviarAccion(action: BattleAction) {
-  obtenerSocket().emit("battle:action", action);
+interface PropiedadesTablero {
+  // Si se provee, las acciones se despachan localmente (modo práctica vs CPU).
+  // Si está ausente, se usa el socket como de costumbre.
+  onAccion?: (accion: BattleAction) => void;
+  // Callback para salir del modo local
+  onSalir?: () => void;
 }
 
 function tituloFase(fase: string): string {
@@ -135,8 +139,10 @@ function SlotVacio({
   );
 }
 
-export default function TableroJuego() {
-  usarSocket();
+export default function TableroJuego({ onAccion, onSalir }: PropiedadesTablero = {}) {
+  // En modo local (onAccion provisto) no inicializamos el socket
+  const modoLocal = Boolean(onAccion);
+  usarSocket(!modoLocal);
   const {
     room,
     battle,
@@ -160,6 +166,15 @@ export default function TableroJuego() {
   const [draggedCardId, setDraggedCardId] = useState<string | null>(null);
   const [activeDropzone, setActiveDropzone] = useState<string | null>(null);
   const [panelAbierto, setPanelAbierto] = useState(true);
+
+  // Función de despacho: usa el handler local si está en modo práctica, o el socket en modo online
+  function enviarAccion(accion: BattleAction) {
+    if (onAccion) {
+      onAccion(accion);
+    } else {
+      obtenerSocket().emit("battle:action", accion);
+    }
+  }
 
   if (!battle || !me || !match) {
     return <main className="min-h-screen px-6 py-10 text-[#6a4b24]">Cargando batalla...</main>;
@@ -704,11 +719,14 @@ export default function TableroJuego() {
               <button
                 type="button"
                 className="boton-panel boton-panel-secundario"
-                onClick={() => obtenerSocket().emit("room:leave")}
+                onClick={() => {
+                  if (onSalir) onSalir();
+                  else obtenerSocket().emit("room:leave");
+                }}
               >
                 Salir
               </button>
-              {soyHost ? (
+              {!modoLocal && soyHost ? (
                 <button
                   type="button"
                   className="boton-panel"

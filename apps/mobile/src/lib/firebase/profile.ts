@@ -17,9 +17,11 @@ export interface PerfilJugadorRemoto {
   lastSeenAt?: unknown;
   preferencias: {
     lastCpuDifficulty: "recluta" | "capitan" | "general";
+    phoneOrientationPreference: "portrait" | "landscape" | "auto";
   };
   progreso: {
     localMatchesPlayed: number;
+    puntos: number;
   };
 }
 

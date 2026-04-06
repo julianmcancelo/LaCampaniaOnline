@@ -21,7 +21,7 @@ export default function PantallaSala() {
 
   useEffect(() => {
     if (!room?.id) {
-      router.replace("/(tabs)/jugar");
+      router.replace("/online" as never);
       return;
     }
 
@@ -57,7 +57,7 @@ export default function PantallaSala() {
   async function salirSala() {
     const socket = await obtenerSocket();
     socket.emit("room:leave");
-    router.replace("/(tabs)/jugar");
+    router.replace("/online" as never);
   }
 
   if (!room) {
@@ -103,18 +103,12 @@ export default function PantallaSala() {
         <View style={styles.workspace}>
           <View style={styles.mainColumn}>
             <SectionCard eyebrow="Sala de espera" title="Preparando el match">
-              <Text style={styles.copy}>
-                Marca que estas listo y, si sos host, inicia la partida cuando todos esten preparados.
-              </Text>
+              <Text style={styles.copy}>Marca que estas listo y, si sos host, inicia la partida cuando todos esten preparados.</Text>
               <View style={styles.stack}>
                 {availableActions
                   .filter((action) => action.enabled && (action.type === "SET_READY" || action.type === "START_MATCH"))
                   .map((action) => (
-                    <ActionButton
-                      key={action.type}
-                      label={etiquetaAccion(action.type)}
-                      onPress={() => void ejecutarAccion(action)}
-                    />
+                    <ActionButton key={action.type} label={etiquetaAccion(action.type)} onPress={() => void ejecutarAccion(action)} />
                   ))}
               </View>
             </SectionCard>

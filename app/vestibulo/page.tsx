@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowRight, ArrowLeft, Users, Swords, Shield, RefreshCw, CheckCircle, Circle, Wifi, WifiOff, Hash, Crown, Handshake } from "lucide-react";
+import { ArrowRight, ArrowLeft, Users, Swords, Shield, RefreshCw, CheckCircle, Circle, Wifi, WifiOff, Hash, Crown, Handshake, Bot, Zap } from "lucide-react";
 import { usarSocket } from "../../ganchos/usarSocket";
 import { obtenerSocket } from "../../lib/socket";
 import { usarEstadoJuego } from "../../ganchos/usarEstadoJuego";
@@ -39,7 +39,7 @@ export default function PaginaVestibulo() {
   const [modo, setModo] = useState<ModoJuego>("individual");
   const [maxJugadores, setMaxJugadores] = useState(2);
   const [equipo, setEquipo] = useState<EquipoId>("A");
-  const [tab, setTab] = useState<"crear" | "unirse">("crear");
+  const [tab, setTab] = useState<"crear" | "unirse" | "practica">("crear");
   const [cargando, setCargando] = useState<string | null>(null);
 
   useEffect(() => {
@@ -143,11 +143,15 @@ export default function PaginaVestibulo() {
             {/* Tabs */}
             <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.16 }}>
               <div className="flex gap-1 p-1 rounded-xl mb-5" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.05)" }}>
-                {(["crear", "unirse"] as const).map((t) => (
-                  <button key={t} type="button" onClick={() => setTab(t)} className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg transition-all duration-200" style={{ fontFamily: "'Cinzel', Georgia, serif", fontSize: 11, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", background: tab === t ? "rgba(212,160,23,0.1)" : "transparent", color: tab === t ? "#f5d98a" : "#2a3a30", border: tab === t ? "1px solid rgba(212,160,23,0.25)" : "1px solid transparent" }}>
-                    {t === "crear" ? <><Swords size={11} strokeWidth={1.5} /> Crear sala</> : <><Users size={11} strokeWidth={1.5} /> Unirse {salasDisponibles.length > 0 && <span style={{ marginLeft: 4, padding: "1px 6px", borderRadius: 5, background: "rgba(212,160,23,0.15)", color: "#d4a017", fontSize: 9 }}>{salasDisponibles.length}</span>}</>}
-                  </button>
-                ))}
+                <button type="button" onClick={() => setTab("crear")} className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg transition-all duration-200" style={{ fontFamily: "'Cinzel', Georgia, serif", fontSize: 11, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", background: tab === "crear" ? "rgba(212,160,23,0.1)" : "transparent", color: tab === "crear" ? "#f5d98a" : "#2a3a30", border: tab === "crear" ? "1px solid rgba(212,160,23,0.25)" : "1px solid transparent" }}>
+                  <Swords size={11} strokeWidth={1.5} /> Crear sala
+                </button>
+                <button type="button" onClick={() => setTab("unirse")} className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg transition-all duration-200" style={{ fontFamily: "'Cinzel', Georgia, serif", fontSize: 11, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", background: tab === "unirse" ? "rgba(212,160,23,0.1)" : "transparent", color: tab === "unirse" ? "#f5d98a" : "#2a3a30", border: tab === "unirse" ? "1px solid rgba(212,160,23,0.25)" : "1px solid transparent" }}>
+                  <Users size={11} strokeWidth={1.5} /> Unirse {salasDisponibles.length > 0 && <span style={{ marginLeft: 4, padding: "1px 6px", borderRadius: 5, background: "rgba(212,160,23,0.15)", color: "#d4a017", fontSize: 9 }}>{salasDisponibles.length}</span>}
+                </button>
+                <button type="button" onClick={() => setTab("practica")} className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg transition-all duration-200" style={{ fontFamily: "'Cinzel', Georgia, serif", fontSize: 11, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", background: tab === "practica" ? "rgba(52,211,153,0.1)" : "transparent", color: tab === "practica" ? "#34d399" : "#2a3a30", border: tab === "practica" ? "1px solid rgba(52,211,153,0.25)" : "1px solid transparent" }}>
+                  <Bot size={11} strokeWidth={1.5} /> Práctica
+                </button>
               </div>
 
               <AnimatePresence mode="wait">
@@ -221,6 +225,44 @@ export default function PaginaVestibulo() {
                           ))}
                         </div>
                       )}
+                    </div>
+                  </motion.div>
+                )}
+                {tab === "practica" && (
+                  <motion.div key="practica" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} transition={{ duration: 0.22 }}>
+                    <div className="p-6 rounded-2xl" style={{ background: "rgba(10,26,19,0.55)", border: "1px solid rgba(52,211,153,0.12)" }}>
+                      <div className="flex items-center gap-3 mb-5">
+                        <div style={{ width: 40, height: 40, borderRadius: 10, display: "flex", alignItems: "center", justifyContent: "center", background: "rgba(52,211,153,0.08)", border: "1px solid rgba(52,211,153,0.2)" }}>
+                          <Bot size={20} color="#34d399" />
+                        </div>
+                        <div>
+                          <div style={{ fontFamily: "'Cinzel', Georgia, serif", fontSize: 15, fontWeight: 700, color: "#e8dcc4", marginBottom: 2 }}>Modo Práctica vs CPU</div>
+                          <div style={{ fontSize: 11, color: "#2a3a30" }}>Sin conexión necesaria — corre 100% en tu navegador.</div>
+                        </div>
+                      </div>
+                      <p style={{ fontSize: 13, color: "#3a5040", lineHeight: 1.7, marginBottom: 20 }}>
+                        Jugá partidas de entrenamiento contra la computadora. Elegí tu dificultad y practicá tus estrategias sin la presión del multijugador.
+                      </p>
+                      <div className="grid sm:grid-cols-3 gap-3 mb-6">
+                        {[
+                          { nivel: "Fácil", desc: "Jugadas al azar, ideal para aprender.", icono: Shield, acento: "#34d399" },
+                          { nivel: "Normal", desc: "Estrategia básica y ataque selectivo.", icono: Swords, acento: "#f5d98a" },
+                          { nivel: "Difícil", desc: "IA agresiva, espionaje y castillo óptimo.", icono: Zap, acento: "#f87171" },
+                        ].map(({ nivel, desc, icono: Icono, acento }) => (
+                          <div key={nivel} className="p-4 rounded-xl" style={{ background: `${acento}06`, border: `1px solid ${acento}18` }}>
+                            <Icono size={16} color={acento} style={{ marginBottom: 8 }} />
+                            <div style={{ fontSize: 12, fontWeight: 700, color: acento, fontFamily: "'Cinzel', Georgia, serif", marginBottom: 4 }}>{nivel}</div>
+                            <div style={{ fontSize: 11, color: "#2a3a30", lineHeight: 1.5 }}>{desc}</div>
+                          </div>
+                        ))}
+                      </div>
+                      <Link href="/local" style={{ textDecoration: "none" }}>
+                        <motion.div className="flex items-center justify-center gap-3 py-4 rounded-xl cursor-pointer" style={{ background: "linear-gradient(135deg, rgba(52,211,153,0.12), rgba(16,66,48,0.5))", border: "1px solid rgba(52,211,153,0.3)", fontFamily: "'Cinzel Decorative', Georgia, serif", fontSize: 14, fontWeight: 900, color: "#34d399", letterSpacing: "0.06em" }} whileHover={{ borderColor: "rgba(52,211,153,0.6)", background: "linear-gradient(135deg, rgba(52,211,153,0.18), rgba(16,66,48,0.6))" }} whileTap={{ scale: 0.98 }}>
+                          <Bot size={16} />
+                          Iniciar práctica
+                          <ArrowRight size={14} />
+                        </motion.div>
+                      </Link>
                     </div>
                   </motion.div>
                 )}

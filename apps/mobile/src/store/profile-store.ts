@@ -4,6 +4,7 @@ import { loadRemoteProfile, saveRemoteProfile, type PerfilJugadorRemoto } from "
 import { loadJson, saveJson, STORAGE_KEYS } from "../lib/storage";
 
 export type DificultadLocal = "recluta" | "capitan" | "general";
+export type PreferenciaOrientacionCelular = "portrait" | "landscape" | "auto";
 
 export interface PerfilJugador {
   uid: string;
@@ -12,9 +13,11 @@ export interface PerfilJugador {
   perfilCompleto: boolean;
   preferencias: {
     lastCpuDifficulty: DificultadLocal;
+    phoneOrientationPreference: PreferenciaOrientacionCelular;
   };
   progreso: {
     localMatchesPlayed: number;
+    puntos: number;
   };
 }
 
@@ -28,6 +31,7 @@ interface ProfileStore {
   initialize: () => Promise<void>;
   saveDisplayName: (displayName: string) => Promise<void>;
   setLastCpuDifficulty: (difficulty: DificultadLocal) => Promise<void>;
+  setPhoneOrientationPreference: (orientation: PreferenciaOrientacionCelular) => Promise<void>;
   incrementLocalMatches: () => Promise<void>;
 }
 
@@ -39,9 +43,11 @@ function createFallbackProfile(uid: string, displayName = ""): PerfilJugador {
     perfilCompleto: Boolean(displayName.trim()),
     preferencias: {
       lastCpuDifficulty: "capitan",
+      phoneOrientationPreference: "portrait",
     },
     progreso: {
       localMatchesPlayed: 0,
+      puntos: 0,
     },
   };
 }
@@ -86,9 +92,11 @@ export const useProfileStore = create<ProfileStore>((set, get) => ({
           perfilCompleto: remote.perfilCompleto ?? Boolean(remote.displayName?.trim()),
           preferencias: {
             lastCpuDifficulty: remote.preferencias?.lastCpuDifficulty ?? localProfile?.preferencias.lastCpuDifficulty ?? "capitan",
+            phoneOrientationPreference: remote.preferencias?.phoneOrientationPreference ?? localProfile?.preferencias.phoneOrientationPreference ?? "portrait",
           },
           progreso: {
             localMatchesPlayed: remote.progreso?.localMatchesPlayed ?? localProfile?.progreso.localMatchesPlayed ?? 0,
+            puntos: remote.progreso?.puntos ?? localProfile?.progreso.puntos ?? 0,
           },
         }) ||
         localProfile ||
@@ -160,6 +168,28 @@ export const useProfileStore = create<ProfileStore>((set, get) => ({
       set({ profile: next, error: error instanceof Error ? error.message : "No se pudo guardar la preferencia." });
     }
   },
+  setPhoneOrientationPreference: async (orientation) => {
+    const current = get().profile;
+    if (!current) {
+      return;
+    }
+
+    const next: PerfilJugador = {
+      ...current,
+      preferencias: {
+        ...current.preferencias,
+        phoneOrientationPreference: orientation,
+      },
+    };
+
+    await persistProfile(next);
+    try {
+      await saveRemoteProfile(toRemoteProfile(next));
+      set({ profile: next, error: null });
+    } catch (error) {
+      set({ profile: next, error: error instanceof Error ? error.message : "No se pudo guardar la orientación." });
+    }
+  },
   incrementLocalMatches: async () => {
     const current = get().profile;
     if (!current) {
@@ -170,6 +200,7 @@ export const useProfileStore = create<ProfileStore>((set, get) => ({
       ...current,
       progreso: {
         localMatchesPlayed: current.progreso.localMatchesPlayed + 1,
+        puntos: current.progreso.puntos + 10,
       },
     };
 

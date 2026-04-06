@@ -25,6 +25,7 @@ import {
   Layers,
   Target,
   TrendingUp,
+  Bot,
 } from "lucide-react";
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -431,6 +432,34 @@ export default function PaginaInicio() {
               >
                 Entrar al vestíbulo
                 <ArrowRight size={16} strokeWidth={2.5} />
+              </motion.span>
+            </Link>
+
+            <Link href="/local">
+              <motion.span
+                className="flex items-center gap-2 cursor-pointer"
+                style={{
+                  padding: "15px 28px",
+                  borderRadius: 12,
+                  fontFamily: "'Cinzel', Georgia, serif",
+                  fontSize: 13,
+                  fontWeight: 700,
+                  letterSpacing: "0.12em",
+                  textTransform: "uppercase",
+                  color: "#34d399",
+                  background: "rgba(52,211,153,0.06)",
+                  border: "1px solid rgba(52,211,153,0.22)",
+                }}
+                whileHover={{
+                  color: "#6ee7b7",
+                  borderColor: "rgba(52,211,153,0.45)",
+                  background: "rgba(52,211,153,0.1)",
+                }}
+                whileTap={{ scale: 0.98 }}
+                transition={{ duration: 0.15 }}
+              >
+                <Bot size={15} strokeWidth={2} />
+                Jugar vs CPU
               </motion.span>
             </Link>
 
@@ -1008,6 +1037,29 @@ export default function PaginaInicio() {
               >
                 Entrar al vestíbulo
                 <ArrowRight size={18} strokeWidth={2} />
+              </motion.span>
+            </Link>
+
+            <Link href="/local" style={{ marginTop: 16, display: "inline-block" }}>
+              <motion.span
+                className="inline-flex items-center gap-2 cursor-pointer"
+                style={{
+                  padding: "13px 28px",
+                  borderRadius: 12,
+                  fontFamily: "'Cinzel', Georgia, serif",
+                  fontSize: 13,
+                  fontWeight: 700,
+                  letterSpacing: "0.1em",
+                  textTransform: "uppercase",
+                  color: "#34d399",
+                  background: "rgba(52,211,153,0.06)",
+                  border: "1px solid rgba(52,211,153,0.2)",
+                }}
+                whileHover={{ borderColor: "rgba(52,211,153,0.4)", background: "rgba(52,211,153,0.1)" }}
+                whileTap={{ scale: 0.97 }}
+              >
+                <Bot size={14} />
+                Practicar vs CPU
               </motion.span>
             </Link>
           </EntradaAlVer>

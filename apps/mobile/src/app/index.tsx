@@ -13,5 +13,5 @@ export default function Index() {
     return <Redirect href="/onboarding" />;
   }
 
-  return <Redirect href="/(tabs)/jugar" />;
+  return <Redirect href={"/local" as never} />;
 }

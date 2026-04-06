@@ -12,7 +12,7 @@ export function Screen({ children, scroll = false }: PropsWithChildren<{ scroll?
       contentContainerStyle={[styles.scrollContent, { paddingHorizontal: horizontalPadding }]}
       style={styles.flex}
     >
-      <View style={styles.inner}>{children}</View>
+      <View style={styles.scrollInner}>{children}</View>
     </ScrollView>
   ) : (
     <View style={[styles.content, { paddingHorizontal: horizontalPadding }]}>
@@ -42,6 +42,10 @@ const styles = StyleSheet.create({
     paddingBottom: spacing.lg,
   },
   inner: {
+    flex: 1,
+    gap: spacing.md,
+  },
+  scrollInner: {
     gap: spacing.md,
   },
 });

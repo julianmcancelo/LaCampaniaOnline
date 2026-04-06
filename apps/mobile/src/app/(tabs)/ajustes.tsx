@@ -1,35 +1,40 @@
 import { useState } from "react";
-import { StyleSheet, Text, TextInput, View, useWindowDimensions } from "react-native";
+import { Pressable, StyleSheet, Text, TextInput, View, useWindowDimensions } from "react-native";
 import { ActionButton } from "../../components/ui/ActionButton";
 import { Screen } from "../../components/ui/Screen";
 import { SectionCard } from "../../components/ui/SectionCard";
-import { useProfileStore } from "../../store/profile-store";
-import { palette, spacing } from "../../theme/tokens";
+import { useProfileStore, type PreferenciaOrientacionCelular } from "../../store/profile-store";
+import { palette, radius, spacing } from "../../theme/tokens";
+
+const orientationOptions: Array<{ value: PreferenciaOrientacionCelular; title: string; icon: string }> = [
+  { value: "portrait", title: "Vertical", icon: "▯" },
+  { value: "landscape", title: "Horizontal", icon: "▬" },
+  { value: "auto", title: "Auto", icon: "◌" },
+];
 
 export default function PantallaAjustes() {
   const { width, height } = useWindowDimensions();
+  const wide = width >= 900 && width > height;
   const profile = useProfileStore((state) => state.profile);
   const authStatus = useProfileStore((state) => state.authStatus);
   const saveDisplayName = useProfileStore((state) => state.saveDisplayName);
+  const setPhoneOrientationPreference = useProfileStore((state) => state.setPhoneOrientationPreference);
   const [draft, setDraft] = useState(profile?.displayName ?? "");
   const [saved, setSaved] = useState(false);
-  const esHorizontal = width > height;
 
   return (
-    <Screen scroll>
-      <View style={[styles.columns, esHorizontal ? styles.columnsHorizontal : null]}>
+    <Screen scroll={!wide}>
+      <View style={[styles.columns, wide ? styles.columnsHorizontal : null]}>
         <View style={styles.column}>
-          <SectionCard eyebrow="Perfil" title="Nombre del jugador">
-            <Text style={styles.copy}>
-              Este nombre se usa en la app, en el modo local y en las partidas online.
-            </Text>
+          <SectionCard eyebrow="Perfil" title="Jugador">
+            <Text style={styles.copy}>Tu nombre se usa en partidas locales, online y progreso.</Text>
             <TextInput
               value={draft}
               onChangeText={(value) => {
                 setDraft(value);
                 setSaved(false);
               }}
-              placeholder="Ingresá tu nombre"
+              placeholder="Ingresa tu nombre"
               placeholderTextColor={palette.textMuted}
               style={styles.input}
               autoCapitalize="words"
@@ -42,15 +47,33 @@ export default function PantallaAjustes() {
               }}
               disabled={!draft.trim()}
             />
-            {saved ? <Text style={styles.saved}>Nombre guardado correctamente.</Text> : null}
+            {saved ? <Text style={styles.saved}>Nombre guardado.</Text> : null}
+          </SectionCard>
+
+          <SectionCard eyebrow="Pantalla" title="Orientacion del celular">
+            <View style={styles.optionList}>
+              {orientationOptions.map((option) => {
+                const selected = profile?.preferencias.phoneOrientationPreference === option.value;
+                return (
+                  <Pressable
+                    key={option.value}
+                    onPress={() => void setPhoneOrientationPreference(option.value)}
+                    style={({ pressed }) => [styles.option, selected ? styles.optionSelected : null, pressed ? styles.optionPressed : null]}
+                  >
+                    <Text style={styles.optionIcon}>{option.icon}</Text>
+                    <Text style={[styles.optionText, selected ? styles.optionTextSelected : null]}>{option.title}</Text>
+                  </Pressable>
+                );
+              })}
+            </View>
           </SectionCard>
         </View>
 
         <View style={styles.column}>
-          <SectionCard eyebrow="Cuenta" title="Estado de sesión">
+          <SectionCard eyebrow="Cuenta" title="Sesion y progreso">
             <View style={styles.row}>
-              <Text style={styles.label}>Identidad</Text>
-              <Text style={styles.value}>{profile?.uid ?? "Sin sesión"}</Text>
+              <Text style={styles.label}>UID</Text>
+              <Text style={styles.value}>{profile?.uid ?? "Sin sesion"}</Text>
             </View>
             <View style={styles.row}>
               <Text style={styles.label}>Modo</Text>
@@ -59,6 +82,10 @@ export default function PantallaAjustes() {
             <View style={styles.row}>
               <Text style={styles.label}>Partidas locales</Text>
               <Text style={styles.value}>{profile?.progreso.localMatchesPlayed ?? 0}</Text>
+            </View>
+            <View style={styles.row}>
+              <Text style={styles.label}>Puntos</Text>
+              <Text style={styles.value}>{profile?.progreso.puntos ?? 0}</Text>
             </View>
           </SectionCard>
         </View>
@@ -70,6 +97,7 @@ export default function PantallaAjustes() {
 const styles = StyleSheet.create({
   columns: {
     gap: spacing.md,
+    flex: 1,
   },
   columnsHorizontal: {
     flexDirection: "row",
@@ -85,7 +113,7 @@ const styles = StyleSheet.create({
     lineHeight: 19,
   },
   input: {
-    borderRadius: 14,
+    borderRadius: radius.md,
     borderWidth: 1,
     borderColor: palette.border,
     backgroundColor: "rgba(255, 248, 239, 0.05)",
@@ -98,6 +126,41 @@ const styles = StyleSheet.create({
     color: palette.success,
     fontSize: 13,
     fontWeight: "600",
+  },
+  optionList: {
+    gap: 10,
+  },
+  option: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    borderRadius: radius.md,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    backgroundColor: "rgba(255,255,255,0.05)",
+    borderWidth: 1,
+    borderColor: palette.border,
+  },
+  optionSelected: {
+    backgroundColor: "rgba(212,160,23,0.16)",
+    borderColor: palette.borderStrong,
+  },
+  optionPressed: {
+    opacity: 0.92,
+  },
+  optionIcon: {
+    color: palette.goldSoft,
+    fontSize: 20,
+    width: 24,
+    textAlign: "center",
+  },
+  optionText: {
+    color: palette.parchment,
+    fontSize: 14,
+    fontWeight: "700",
+  },
+  optionTextSelected: {
+    color: palette.goldSoft,
   },
   row: {
     flexDirection: "row",

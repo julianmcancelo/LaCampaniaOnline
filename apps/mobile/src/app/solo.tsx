@@ -1,6 +1,6 @@
 import { router, useLocalSearchParams } from "expo-router";
 import { useEffect, useRef } from "react";
-import { StyleSheet, Text, View } from "react-native";
+import { StyleSheet, Text, View, useWindowDimensions } from "react-native";
 import { MesaTactica } from "../components/game/MesaTactica";
 import { Screen } from "../components/ui/Screen";
 import { decidirAccionCpu } from "../lib/solo/cpu";
@@ -10,6 +10,8 @@ import { useSoloStore } from "../store/solo-store";
 import { palette, spacing } from "../theme/tokens";
 
 export default function PantallaSolo() {
+  const { width, height } = useWindowDimensions();
+  const scroll = width < height && width < 560;
   const params = useLocalSearchParams<{ dificultad?: DificultadCpu }>();
   const profile = useProfileStore((state) => state.profile);
   const incrementLocalMatches = useProfileStore((state) => state.incrementLocalMatches);
@@ -55,7 +57,7 @@ export default function PantallaSolo() {
 
   if (!estado || !battle || !match) {
     return (
-      <Screen>
+      <Screen scroll={scroll}>
         <View style={styles.center}>
           <Text style={styles.placeholderTitle}>Preparando rival automatico</Text>
           <Text style={styles.placeholderCopy}>Armando la partida local nativa.</Text>
@@ -65,7 +67,7 @@ export default function PantallaSolo() {
   }
 
   return (
-    <Screen>
+    <Screen scroll={scroll}>
       <MesaTactica
         battleView={battle}
         scorePlayers={match.players}
@@ -76,7 +78,7 @@ export default function PantallaSolo() {
         onAction={(action) => aplicar(estado.playerId, action)}
         onExit={() => {
           cerrar();
-          router.replace("/(tabs)/jugar");
+          router.replace("/local" as never);
         }}
         mode="solo"
       />

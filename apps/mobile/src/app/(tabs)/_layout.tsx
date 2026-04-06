@@ -1,4 +1,5 @@
 import { Redirect, Tabs } from "expo-router";
+import { Text } from "react-native";
 import { palette } from "../../theme/tokens";
 import { useProfileStore } from "../../store/profile-store";
 
@@ -30,15 +31,30 @@ export default function TabsLayout() {
       }}
     >
       <Tabs.Screen
-        name="jugar"
+        name="local"
         options={{
-          title: "Jugar",
+          title: "Local",
+          tabBarIcon: ({ color }) => <Text style={{ color, fontSize: 16 }}>⚔</Text>,
+        }}
+      />
+      <Tabs.Screen
+        name="online"
+        options={{
+          title: "Online",
+          tabBarIcon: ({ color }) => <Text style={{ color, fontSize: 16 }}>◉</Text>,
         }}
       />
       <Tabs.Screen
         name="ajustes"
         options={{
           title: "Ajustes",
+          tabBarIcon: ({ color }) => <Text style={{ color, fontSize: 16 }}>⚙</Text>,
+        }}
+      />
+      <Tabs.Screen
+        name="jugar"
+        options={{
+          href: null,
         }}
       />
     </Tabs>

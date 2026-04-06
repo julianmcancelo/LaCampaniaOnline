@@ -5,10 +5,12 @@ import { obtenerSocket } from "../lib/socket";
 import { usarTiendaJuego } from "../tienda/estadoJuego";
 import type { ClientGameView, RoomSummary, SessionReadyPayload } from "../motor/tipos";
 
-export function usarSocket() {
+// activo: si es false, no se conecta al socket (modo local / práctica vs CPU)
+export function usarSocket(activo = true) {
   const { setConnection, setPlayerId, setRoomList, setCurrentRoom, setGameView, setError, resetRoomState } = usarTiendaJuego();
 
   useEffect(() => {
+    if (!activo) return;
     const socket = obtenerSocket();
 
     socket.on("connect", () => {
@@ -64,5 +66,5 @@ export function usarSocket() {
       socket.off("match:error");
       socket.off("room:closed");
     };
-  }, [resetRoomState, setConnection, setCurrentRoom, setError, setGameView, setPlayerId, setRoomList]);
+  }, [activo, resetRoomState, setConnection, setCurrentRoom, setError, setGameView, setPlayerId, setRoomList]);
 }

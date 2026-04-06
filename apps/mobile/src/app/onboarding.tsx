@@ -17,7 +17,7 @@ export default function PantallaOnboarding() {
 
   useEffect(() => {
     if (hydrated && profile?.perfilCompleto) {
-      router.replace("/(tabs)/jugar");
+      router.replace("/local" as never);
     }
   }, [hydrated, profile?.perfilCompleto]);
 
@@ -46,7 +46,7 @@ export default function PantallaOnboarding() {
                 setGuardando(true);
                 await saveDisplayName(nombre);
                 setGuardando(false);
-                router.replace("/(tabs)/jugar");
+                router.replace("/local" as never);
               }}
             />
           </SectionCard>
