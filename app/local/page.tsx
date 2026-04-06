@@ -426,70 +426,74 @@ export default function PaginaLocal() {
     }
   }
 
-  // Loop del CPU: aplica acciones mientras sea su turno
-  const ejecutarTurnoCPU = useCallback(
-    (batallaInicial: BattleState, contexto: ContextoPartidaLocal) => {
-      let batallaActual = batallaInicial;
+  // Loop del CPU: siempre lee el estado más reciente desde batallaRef.current.
+  // NUNCA mantiene una copia local propia — eso causaría desincronización cuando
+  // el humano actualiza el estado (en especial durante INITIAL_DEPLOY).
+  const ejecutarTurnoCPU = useCallback(() => {
+    function paso() {
+      if (!procesandoCpuRef.current) return;
 
-      function paso() {
-        if (!procesandoCpuRef.current) return;
-        if (batallaActual.phase === "BATTLE_OVER" || batallaActual.phase === "MATCH_OVER") {
-          verificarFinPartida(batallaActual);
-          procesandoCpuRef.current = false;
-          return;
-        }
-
-        // Si la CPU está en la fase INITIAL_DEPLOY y ya confirmó, esperar al humano
-        const cpuPlayer = batallaActual.players[ID_CPU];
-        if (
-          batallaActual.phase === "INITIAL_DEPLOY" &&
-          cpuPlayer?.initialDeployConfirmed
-        ) {
-          procesandoCpuRef.current = false;
-          return;
-        }
-
-        const esTurnoCpu =
-          batallaActual.activePlayerId === ID_CPU ||
-          (batallaActual.phase === "BATTLE_INITIATIVE" &&
-            batallaActual.initiative.contenders.includes(ID_CPU) &&
-            batallaActual.initiative.rolls[ID_CPU] === null) ||
-          (batallaActual.phase === "INITIAL_DEPLOY" && !cpuPlayer?.initialDeployConfirmed);
-
-        if (!esTurnoCpu) {
-          procesandoCpuRef.current = false;
-          return;
-        }
-
-        try {
-          const accion = decidirAccionCPU(batallaActual, ID_CPU, dificultad);
-          batallaActual = applyBattleAction(batallaActual, ID_CPU, accion);
-          actualizarVista(batallaActual, contexto);
-          verificarFinPartida(batallaActual);
-
-          if (batallaActual.phase === "BATTLE_OVER") {
-            procesandoCpuRef.current = false;
-            return;
-          }
-        } catch {
-          // Si la IA falla, pasa de fase
-          try {
-            batallaActual = applyBattleAction(batallaActual, ID_CPU, { type: "ADVANCE_PHASE", payload: {} });
-            actualizarVista(batallaActual, contexto);
-          } catch {
-            procesandoCpuRef.current = false;
-            return;
-          }
-        }
-
-        // Continúa el loop con delay para que parezca que el CPU "piensa"
-        setTimeout(paso, 600);
+      // Lee siempre el estado más reciente
+      const batallaActual = batallaRef.current;
+      const contexto = contextoRef.current;
+      if (!batallaActual || !contexto) {
+        procesandoCpuRef.current = false;
+        return;
       }
 
-      setTimeout(paso, 900);
-    },
-    [dificultad], // eslint-disable-line react-hooks/exhaustive-deps
-  );
+      if (batallaActual.phase === "BATTLE_OVER" || batallaActual.phase === "MATCH_OVER") {
+        verificarFinPartida(batallaActual);
+        procesandoCpuRef.current = false;
+        return;
+      }
+
+      const cpuPlayer = batallaActual.players[ID_CPU];
+
+      // Determina si es turno del CPU en este momento exacto.
+      // INITIAL_DEPLOY: el CPU actúa si NO confirmó todavía (aunque sea activePlayer).
+      // BATTLE_INITIATIVE: actúa si no tiró el dado.
+      // Resto de fases: actúa si es el jugador activo.
+      const esTurnoCpu =
+        (batallaActual.phase === "BATTLE_INITIATIVE" &&
+          batallaActual.initiative.contenders.includes(ID_CPU) &&
+          batallaActual.initiative.rolls[ID_CPU] === null) ||
+        (batallaActual.phase === "INITIAL_DEPLOY" && !cpuPlayer?.initialDeployConfirmed) ||
+        (batallaActual.activePlayerId === ID_CPU &&
+          batallaActual.phase !== "INITIAL_DEPLOY" &&
+          batallaActual.phase !== "BATTLE_INITIATIVE");
+
+      if (!esTurnoCpu) {
+        procesandoCpuRef.current = false;
+        return;
+      }
+
+      try {
+        const accion = decidirAccionCPU(batallaActual, ID_CPU, dificultad);
+        const nuevaBatalla = applyBattleAction(batallaActual, ID_CPU, accion);
+        actualizarVista(nuevaBatalla, contexto);
+        verificarFinPartida(nuevaBatalla);
+
+        if (nuevaBatalla.phase === "BATTLE_OVER") {
+          procesandoCpuRef.current = false;
+          return;
+        }
+      } catch {
+        // Si la acción de la IA falla, intenta avanzar de fase como fallback
+        try {
+          const fallback = applyBattleAction(batallaActual, ID_CPU, { type: "ADVANCE_PHASE", payload: {} });
+          actualizarVista(fallback, contexto);
+        } catch {
+          // No puede hacer nada — suelta el control para evitar un loop infinito
+          procesandoCpuRef.current = false;
+          return;
+        }
+      }
+
+      setTimeout(paso, 600);
+    }
+
+    setTimeout(paso, 900);
+  }, [dificultad]); // eslint-disable-line react-hooks/exhaustive-deps
 
   function iniciarPartida(nombre: string, dificultadElegida: DificultadCPU) {
     setNombreJugador(nombre);
@@ -506,9 +510,8 @@ export default function PaginaLocal() {
     actualizarVista(nuevaBatalla, contexto);
     setPantalla("jugando");
 
-    // Si la CPU actúa primero en la iniciativa, lanzamos el loop
     procesandoCpuRef.current = true;
-    ejecutarTurnoCPU(nuevaBatalla, contexto);
+    ejecutarTurnoCPU();
   }
 
   function manejarAccionHumano(accion: BattleAction) {
@@ -520,7 +523,7 @@ export default function PaginaLocal() {
     try {
       nuevaBatalla = applyBattleAction(batalla, ID_JUGADOR_HUMANO, accion);
     } catch {
-      return; // Acción inválida, ignorar
+      return; // Acción inválida — el motor la rechazó, ignorar silenciosamente
     }
 
     actualizarVista(nuevaBatalla, contexto);
@@ -530,10 +533,10 @@ export default function PaginaLocal() {
       return;
     }
 
-    // Después de la acción del humano, puede ser turno del CPU
+    // Después de la acción del humano, disparar el loop del CPU si no está ya corriendo
     if (!procesandoCpuRef.current) {
       procesandoCpuRef.current = true;
-      ejecutarTurnoCPU(nuevaBatalla, contexto);
+      ejecutarTurnoCPU();
     }
   }
 
@@ -550,7 +553,7 @@ export default function PaginaLocal() {
     setPantalla("jugando");
 
     procesandoCpuRef.current = true;
-    ejecutarTurnoCPU(nuevaBatalla, contexto);
+    ejecutarTurnoCPU();
   }
 
   function salir() {

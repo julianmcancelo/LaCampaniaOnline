@@ -2,7 +2,15 @@ import { StyleSheet, Text, View } from "react-native";
 import type { OpponentBattleView, PlayerBattleState } from "../../../../../motor/tipos";
 import { palette, radius } from "../../theme/tokens";
 
-export function CastleHud({ me, opponents }: { me: PlayerBattleState; opponents: OpponentBattleView[] }) {
+export function CastleHud({
+  me,
+  opponents,
+  compact = false,
+}: {
+  me: PlayerBattleState;
+  opponents: OpponentBattleView[];
+  compact?: boolean;
+}) {
   const seen = new Set<string>();
   const entries = [me, ...opponents]
     .map((player) => {
@@ -30,12 +38,12 @@ export function CastleHud({ me, opponents }: { me: PlayerBattleState; opponents:
   return (
     <View style={styles.wrap}>
       {entries.map((entry) => (
-        <View key={entry.key} style={styles.card}>
-          <Text style={styles.label} numberOfLines={1}>
+        <View key={entry.key} style={[styles.card, compact ? styles.cardCompact : null]}>
+          <Text style={[styles.label, compact ? styles.labelCompact : null]} numberOfLines={1}>
             {entry.label}
           </Text>
-          <Text style={styles.progress}>{entry.progress}/{entry.goal}</Text>
-          <Text style={styles.meta}>{entry.relic ? `R${entry.relic}` : "SR"} · -{entry.remaining}</Text>
+          <Text style={[styles.progress, compact ? styles.progressCompact : null]}>{entry.progress}/{entry.goal}</Text>
+          <Text style={[styles.meta, compact ? styles.metaCompact : null]}>{entry.relic ? `R${entry.relic}` : "SR"} · -{entry.remaining}</Text>
         </View>
       ))}
     </View>
@@ -57,6 +65,11 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: 6,
   },
+  cardCompact: {
+    paddingHorizontal: 7,
+    paddingVertical: 5,
+    gap: 4,
+  },
   label: {
     color: palette.textSoft,
     fontSize: 10,
@@ -65,14 +78,24 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     flex: 1,
   },
+  labelCompact: {
+    fontSize: 9,
+    letterSpacing: 0.3,
+  },
   progress: {
     color: palette.parchment,
     fontSize: 12,
     fontWeight: "800",
   },
+  progressCompact: {
+    fontSize: 11,
+  },
   meta: {
     color: palette.textMuted,
     fontSize: 10,
     fontWeight: "700",
+  },
+  metaCompact: {
+    fontSize: 9,
   },
 });

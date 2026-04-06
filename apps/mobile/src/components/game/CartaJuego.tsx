@@ -1,8 +1,9 @@
 import { LinearGradient } from "expo-linear-gradient";
-import { useEffect, useRef } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import { Animated, Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions } from "react-native";
 import type { Carta, UnitInPlay } from "../../../../../motor/tipos";
 import { palette, radius, spacing } from "../../theme/tokens";
+import { resolveGameViewport, type GameViewportMode } from "./viewport";
 
 function tituloCarta(card: Carta): string {
   if (card.tipo === "guerrero") {
@@ -83,27 +84,44 @@ export function CartaJuego({
   card,
   selected = false,
   onPress,
+  variant,
 }: {
   card: Carta;
   selected?: boolean;
   onPress?: () => void;
+  variant?: GameViewportMode;
 }) {
   const { width, height } = useWindowDimensions();
-  const compact = width < 430 || height < 430;
+  const mode = variant ?? resolveGameViewport(width, height).mode;
+  const scale = useMemo(() => getCardScale(mode), [mode]);
 
   const content = (
     <AnimatedCardShell selected={selected}>
-      <LinearGradient colors={colorCarta(card)} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={[styles.card, compact ? styles.cardCompact : null, selected ? styles.selected : null]}>
-        <View style={styles.outerFrame}>
-          <Text style={styles.kicker}>{card.tipo.toUpperCase()}</Text>
-          <View style={styles.illustration}>
-            <View style={styles.orb} />
-            <Text style={styles.title} numberOfLines={2}>
+      <LinearGradient
+        colors={colorCarta(card)}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={[
+          styles.card,
+          {
+            width: scale.cardWidth,
+            minHeight: scale.cardHeight,
+            padding: scale.cardPadding,
+            borderRadius: scale.cardRadius,
+          },
+          selected ? styles.selected : null,
+        ]}
+      >
+        <View style={[styles.outerFrame, { padding: scale.framePadding, borderRadius: scale.frameRadius, gap: scale.innerGap }]}>
+          <Text style={[styles.kicker, { fontSize: scale.kickerSize }]}>{card.tipo.toUpperCase()}</Text>
+          <View style={[styles.illustration, { paddingHorizontal: scale.illustrationPadding, borderRadius: scale.illustrationRadius, gap: scale.illustrationGap }]}>
+            <View style={[styles.orb, { width: scale.orbSize, height: scale.orbSize }]} />
+            <Text style={[styles.title, { fontSize: scale.titleSize, lineHeight: scale.titleLineHeight }]} numberOfLines={2}>
               {tituloCarta(card)}
             </Text>
-            <View style={styles.orb} />
+            <View style={[styles.orb, { width: scale.orbSize, height: scale.orbSize }]} />
           </View>
-          <Text style={styles.meta}>{subtituloCarta(card)}</Text>
+          <Text style={[styles.meta, { fontSize: scale.metaSize, lineHeight: scale.metaLineHeight }]}>{subtituloCarta(card)}</Text>
         </View>
       </LinearGradient>
     </AnimatedCardShell>
@@ -124,32 +142,51 @@ export function UnidadJuego({
   unit,
   selected = false,
   onPress,
+  variant,
 }: {
   unit: UnitInPlay;
   selected?: boolean;
   onPress?: () => void;
+  variant?: GameViewportMode;
 }) {
+  const { width, height } = useWindowDimensions();
+  const mode = variant ?? resolveGameViewport(width, height).mode;
+  const scale = useMemo(() => getCardScale(mode), [mode]);
   const vidaActual = Math.max(unit.vidaMaxima - unit.damageTaken, 0);
   const ratio = unit.vidaMaxima > 0 ? vidaActual / unit.vidaMaxima : 0;
   const barColor = ratio > 0.65 ? palette.success : ratio > 0.3 ? palette.gold : palette.danger;
 
   const content = (
     <AnimatedCardShell selected={selected}>
-      <LinearGradient colors={["#fbf5e8", "#eee4d0", "#ded2be"]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={[styles.card, styles.unitCard, selected ? styles.selected : null]}>
-        <View style={styles.outerFrame}>
-          <Text style={styles.kicker}>UNIDAD</Text>
-          <View style={styles.illustration}>
-            <View style={styles.orb} />
-            <Text style={styles.title}>{unit.guerrero}</Text>
-            <View style={styles.orb} />
+      <LinearGradient
+        colors={["#fbf5e8", "#eee4d0", "#ded2be"]}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={[
+          styles.card,
+          {
+            width: scale.cardWidth,
+            minHeight: scale.unitHeight,
+            padding: scale.cardPadding,
+            borderRadius: scale.cardRadius,
+          },
+          selected ? styles.selected : null,
+        ]}
+      >
+        <View style={[styles.outerFrame, { padding: scale.framePadding, borderRadius: scale.frameRadius, gap: scale.innerGap }]}>
+          <Text style={[styles.kicker, { fontSize: scale.kickerSize }]}>UNIDAD</Text>
+          <View style={[styles.illustration, { paddingHorizontal: scale.illustrationPadding, borderRadius: scale.illustrationRadius, gap: scale.illustrationGap }]}>
+            <View style={[styles.orb, { width: scale.orbSize, height: scale.orbSize }]} />
+            <Text style={[styles.title, { fontSize: scale.titleSize, lineHeight: scale.titleLineHeight }]}>{unit.guerrero}</Text>
+            <View style={[styles.orb, { width: scale.orbSize, height: scale.orbSize }]} />
           </View>
-          <View style={styles.healthTrack}>
+          <View style={[styles.healthTrack, { height: scale.healthTrackHeight }]}>
             <View style={[styles.healthFill, { width: `${Math.max(10, ratio * 100)}%`, backgroundColor: barColor }]} />
           </View>
-          <Text style={styles.meta}>
+          <Text style={[styles.meta, { fontSize: scale.metaSize, lineHeight: scale.metaLineHeight }]}>
             Vida {vidaActual}/{unit.vidaMaxima}
           </Text>
-          <Text style={styles.meta}>{unit.shield ? `Escudo ${unit.shield.remaining}` : `Danio ${unit.damageTaken}`}</Text>
+          <Text style={[styles.meta, { fontSize: scale.metaSize, lineHeight: scale.metaLineHeight }]}>{unit.shield ? `Escudo ${unit.shield.remaining}` : `Daño ${unit.damageTaken}`}</Text>
         </View>
       </LinearGradient>
     </AnimatedCardShell>
@@ -166,10 +203,11 @@ export function UnidadJuego({
   );
 }
 
-function SlotVacio({ label }: { label: string }) {
+function SlotVacio({ label, variant }: { label: string; variant: GameViewportMode }) {
+  const scale = getCardScale(variant);
   return (
-    <View style={styles.slot}>
-      <Text style={styles.slotText}>{label}</Text>
+    <View style={[styles.slot, { width: scale.slotWidth, minHeight: scale.slotHeight, borderRadius: scale.cardRadius }]}>
+      <Text style={[styles.slotText, { fontSize: scale.slotTextSize, lineHeight: scale.slotLineHeight }]}>{label}</Text>
     </View>
   );
 }
@@ -179,27 +217,34 @@ export function TiraCartas({
   cards,
   selectedCardIds,
   onCardPress,
+  variant,
 }: {
   title: string;
   cards: Carta[];
   selectedCardIds?: string[];
   onCardPress?: (card: Carta) => void;
+  variant?: GameViewportMode;
 }) {
+  const { width, height } = useWindowDimensions();
+  const mode = variant ?? resolveGameViewport(width, height).mode;
+  const scale = getCardScale(mode);
+
   return (
     <View style={styles.block}>
-      <Text style={styles.blockTitle}>{title}</Text>
+      <Text style={[styles.blockTitle, { fontSize: scale.blockTitleSize }]}>{title}</Text>
       {cards.length === 0 ? (
         <View style={styles.empty}>
           <Text style={styles.emptyText}>Sin cartas</Text>
         </View>
       ) : (
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.row}>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={[styles.row, { gap: scale.rowGap }]}>
           {cards.map((card) => (
             <CartaJuego
               key={card.id}
               card={card}
               selected={selectedCardIds?.includes(card.id)}
               onPress={onCardPress ? () => onCardPress(card) : undefined}
+              variant={mode}
             />
           ))}
         </ScrollView>
@@ -215,6 +260,7 @@ export function TiraUnidades({
   onUnitPress,
   maxSlots = 5,
   emptyLabel = "Espacio",
+  variant,
 }: {
   title: string;
   units: UnitInPlay[];
@@ -222,27 +268,119 @@ export function TiraUnidades({
   onUnitPress?: (unit: UnitInPlay) => void;
   maxSlots?: number;
   emptyLabel?: string;
+  variant?: GameViewportMode;
 }) {
+  const { width, height } = useWindowDimensions();
+  const mode = variant ?? resolveGameViewport(width, height).mode;
+  const scale = getCardScale(mode);
   const slots = Math.max(maxSlots - units.length, 0);
 
   return (
     <View style={styles.block}>
-      <Text style={styles.blockTitle}>{title}</Text>
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.row}>
+      <Text style={[styles.blockTitle, { fontSize: scale.blockTitleSize }]}>{title}</Text>
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={[styles.row, { gap: scale.rowGap }]}>
         {units.map((unit) => (
           <UnidadJuego
             key={unit.instanceId}
             unit={unit}
             selected={selectedUnitId === unit.instanceId}
             onPress={onUnitPress ? () => onUnitPress(unit) : undefined}
+            variant={mode}
           />
         ))}
         {Array.from({ length: slots }).map((_, index) => (
-          <SlotVacio key={`${title}-slot-${index}`} label={emptyLabel} />
+          <SlotVacio key={`${title}-slot-${index}`} label={emptyLabel} variant={mode} />
         ))}
       </ScrollView>
     </View>
   );
+}
+
+function getCardScale(mode: GameViewportMode) {
+  switch (mode) {
+    case "tabletLandscape":
+      return {
+        cardWidth: 116,
+        cardHeight: 166,
+        unitHeight: 174,
+        slotWidth: 110,
+        slotHeight: 166,
+        cardPadding: 7,
+        cardRadius: 18,
+        framePadding: 9,
+        frameRadius: 14,
+        innerGap: 8,
+        illustrationPadding: 10,
+        illustrationRadius: 16,
+        illustrationGap: 10,
+        orbSize: 18,
+        titleSize: 17,
+        titleLineHeight: 21,
+        kickerSize: 8,
+        metaSize: 10,
+        metaLineHeight: 13,
+        healthTrackHeight: 6,
+        slotTextSize: 11,
+        slotLineHeight: 15,
+        blockTitleSize: 10,
+        rowGap: 10,
+      };
+    case "phoneLandscape":
+      return {
+        cardWidth: 88,
+        cardHeight: 122,
+        unitHeight: 130,
+        slotWidth: 84,
+        slotHeight: 122,
+        cardPadding: 5,
+        cardRadius: 14,
+        framePadding: 7,
+        frameRadius: 10,
+        innerGap: 6,
+        illustrationPadding: 6,
+        illustrationRadius: 12,
+        illustrationGap: 7,
+        orbSize: 14,
+        titleSize: 13,
+        titleLineHeight: 16,
+        kickerSize: 7,
+        metaSize: 9,
+        metaLineHeight: 11,
+        healthTrackHeight: 5,
+        slotTextSize: 10,
+        slotLineHeight: 13,
+        blockTitleSize: 9,
+        rowGap: 8,
+      };
+    case "phonePortrait":
+    default:
+      return {
+        cardWidth: 84,
+        cardHeight: 118,
+        unitHeight: 126,
+        slotWidth: 80,
+        slotHeight: 118,
+        cardPadding: 5,
+        cardRadius: 14,
+        framePadding: 7,
+        frameRadius: 10,
+        innerGap: 6,
+        illustrationPadding: 6,
+        illustrationRadius: 12,
+        illustrationGap: 7,
+        orbSize: 14,
+        titleSize: 13,
+        titleLineHeight: 16,
+        kickerSize: 7,
+        metaSize: 9,
+        metaLineHeight: 11,
+        healthTrackHeight: 5,
+        slotTextSize: 10,
+        slotLineHeight: 13,
+        blockTitleSize: 9,
+        rowGap: 8,
+      };
+  }
 }
 
 const styles = StyleSheet.create({
@@ -257,60 +395,39 @@ const styles = StyleSheet.create({
     fontWeight: "800",
   },
   row: {
-    gap: 10,
     paddingRight: 6,
   },
   card: {
-    width: 98,
-    minHeight: 136,
-    borderRadius: 16,
     borderWidth: 1,
     borderColor: "rgba(126, 99, 54, 0.32)",
-    padding: 6,
     shadowColor: "#3b2b15",
     shadowOpacity: 0.18,
     shadowRadius: 8,
     shadowOffset: { width: 0, height: 3 },
     elevation: 2,
   },
-  cardCompact: {
-    width: 88,
-    minHeight: 124,
-  },
   outerFrame: {
     flex: 1,
-    borderRadius: 12,
     borderWidth: 1,
     borderColor: "rgba(128, 111, 77, 0.26)",
-    padding: 8,
     justifyContent: "space-between",
     backgroundColor: "rgba(255,255,255,0.12)",
-    gap: 8,
-  },
-  unitCard: {
-    minHeight: 142,
   },
   kicker: {
     color: "#977b49",
-    fontSize: 8,
     textTransform: "uppercase",
     letterSpacing: 1,
     fontWeight: "800",
   },
   illustration: {
     flex: 1,
-    borderRadius: 14,
     borderWidth: 1,
     borderColor: "rgba(104, 91, 66, 0.24)",
     alignItems: "center",
     justifyContent: "center",
-    paddingHorizontal: 8,
-    gap: 10,
     backgroundColor: "rgba(255,255,255,0.22)",
   },
   orb: {
-    width: 18,
-    height: 18,
     borderRadius: 999,
     borderWidth: 1,
     borderColor: "rgba(118, 115, 143, 0.45)",
@@ -318,17 +435,13 @@ const styles = StyleSheet.create({
   },
   title: {
     color: "#58685f",
-    fontSize: 15,
     fontWeight: "700",
     textAlign: "center",
   },
   meta: {
     color: "#907f62",
-    fontSize: 10,
-    lineHeight: 14,
   },
   healthTrack: {
-    height: 6,
     borderRadius: 999,
     backgroundColor: "rgba(92, 79, 53, 0.14)",
     overflow: "hidden",
@@ -338,9 +451,6 @@ const styles = StyleSheet.create({
     borderRadius: 999,
   },
   slot: {
-    width: 94,
-    minHeight: 132,
-    borderRadius: 16,
     borderWidth: 1,
     borderStyle: "dashed",
     borderColor: "rgba(137, 104, 48, 0.34)",
@@ -351,9 +461,7 @@ const styles = StyleSheet.create({
   },
   slotText: {
     color: "#8a744f",
-    fontSize: 11,
     textAlign: "center",
-    lineHeight: 16,
   },
   empty: {
     borderRadius: radius.md,
