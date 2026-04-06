@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useState } from "react";
 import { Pressable, StyleSheet, Text, TextInput, View, useWindowDimensions } from "react-native";
-import { ProfileAvatar } from "../../components/ui/ProfileAvatar";
 import { resolveGameViewport } from "../../components/game/viewport";
 import { ActionButton } from "../../components/ui/ActionButton";
+import { BrandHero } from "../../components/ui/BrandHero";
+import { ProfileAvatar } from "../../components/ui/ProfileAvatar";
 import { Screen } from "../../components/ui/Screen";
 import { SectionCard } from "../../components/ui/SectionCard";
 import { useProfileStore, type PreferenciaOrientacionCelular } from "../../store/profile-store";
@@ -39,6 +40,15 @@ export default function PantallaAjustes() {
   return (
     <Screen scroll={!wide}>
       <View style={[styles.columns, wide ? styles.columnsHorizontal : null]}>
+        <View style={styles.heroBox}>
+          <BrandHero
+            eyebrow="Perfil y progreso"
+            title="Tu rueda"
+            subtitle="Foto, nombre, posicion y orientacion del campo en una sola posta."
+            compact={!wide}
+          />
+        </View>
+
         <View style={styles.column}>
           <SectionCard eyebrow="Perfil" title="Jugador">
             <View style={styles.profileHeader}>
@@ -77,7 +87,7 @@ export default function PantallaAjustes() {
             {saved ? <Text style={styles.saved}>Nombre guardado.</Text> : null}
           </SectionCard>
 
-          <SectionCard eyebrow="Pantalla" title="Orientación del celular">
+          <SectionCard eyebrow="Pantalla" title="Orientacion del celular">
             <View style={styles.optionList}>
               {orientationOptions.map((option) => {
                 const selected = profile?.preferencias.phoneOrientationPreference === option.value;
@@ -97,10 +107,10 @@ export default function PantallaAjustes() {
         </View>
 
         <View style={styles.column}>
-          <SectionCard eyebrow="Cuenta" title="Sesión y estadísticas">
+          <SectionCard eyebrow="Cuenta" title="Sesion y estadisticas">
             <View style={styles.row}>
               <Text style={styles.label}>UID</Text>
-              <Text style={styles.value}>{profile?.uid ?? "Sin sesión"}</Text>
+              <Text style={styles.value}>{profile?.uid ?? "Sin sesion"}</Text>
             </View>
             <View style={styles.row}>
               <Text style={styles.label}>Modo</Text>
@@ -127,31 +137,25 @@ export default function PantallaAjustes() {
               <Text style={styles.value}>{profile?.progreso.winStreak ?? 0}</Text>
             </View>
             <View style={styles.row}>
-              <Text style={styles.label}>CPU más alta</Text>
+              <Text style={styles.label}>CPU mas alta</Text>
               <Text style={styles.value}>{profile?.progreso.highestCpuDifficultyWon ?? "-"}</Text>
             </View>
           </SectionCard>
 
           <SectionCard eyebrow="Ranking" title="Tabla de posiciones">
             <View style={styles.rankHeader}>
-              <Text style={styles.copy}>Top global simple por puntos. Google Play Games se suma en una etapa posterior.</Text>
+              <Text style={styles.copy}>Top global simple por puntos. Google Play Games entra en una etapa posterior.</Text>
               <ActionButton label="Actualizar" tone="secondary" onPress={() => void refreshLeaderboard()} />
             </View>
             <View style={styles.row}>
-              <Text style={styles.label}>Tu posición</Text>
+              <Text style={styles.label}>Tu posicion</Text>
               <Text style={styles.value}>{myRank > 0 ? `#${myRank}` : "Fuera del top"}</Text>
             </View>
             <View style={styles.rankList}>
               {leaderboard.slice(0, 8).map((entry, index) => (
                 <View key={entry.uid} style={styles.rankRow}>
                   <Text style={styles.rankPosition}>#{index + 1}</Text>
-                  <ProfileAvatar
-                    size={34}
-                    displayName={entry.displayName}
-                    photoURL={entry.photoURL}
-                    avatarKind={entry.avatarKind}
-                    crestId={entry.crestId}
-                  />
+                  <ProfileAvatar size={34} displayName={entry.displayName} photoURL={entry.photoURL} avatarKind={entry.avatarKind} crestId={entry.crestId} />
                   <Text numberOfLines={1} style={styles.rankName}>
                     {entry.displayName}
                   </Text>
@@ -173,7 +177,11 @@ const styles = StyleSheet.create({
   },
   columnsHorizontal: {
     flexDirection: "row",
-    alignItems: "stretch",
+    alignItems: "flex-start",
+    flexWrap: "wrap",
+  },
+  heroBox: {
+    width: "100%",
   },
   column: {
     flex: 1,

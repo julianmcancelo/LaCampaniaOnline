@@ -4,8 +4,9 @@ import { Pressable, StyleSheet, Text, TextInput, View, useWindowDimensions } fro
 import type { ModoJuego } from "../../../../../motor/tipos";
 import { resolveGameViewport } from "../../components/game/viewport";
 import { RoomCard } from "../../components/lobby/RoomCard";
-import { ProfileAvatar } from "../../components/ui/ProfileAvatar";
 import { ActionButton } from "../../components/ui/ActionButton";
+import { BrandHero } from "../../components/ui/BrandHero";
+import { ProfileAvatar } from "../../components/ui/ProfileAvatar";
 import { Screen } from "../../components/ui/Screen";
 import { SectionCard } from "../../components/ui/SectionCard";
 import { getSocketUrl, obtenerSocket } from "../../lib/socket";
@@ -97,7 +98,7 @@ export default function PantallaOnline() {
     }
     const socket = await obtenerSocket();
     socket.emit("room:create", {
-      roomName: roomName.trim() || `Sala ${maxPlayers} jugadores`,
+      roomName: roomName.trim() || `Duelo ${maxPlayers} jugadores`,
       displayName: profile.displayName.trim(),
       mode,
       maxPlayers,
@@ -120,6 +121,15 @@ export default function PantallaOnline() {
   return (
     <Screen scroll={!wide}>
       <View style={[styles.wrap, wide ? styles.wrapHorizontal : null]}>
+        <View style={styles.heroBox}>
+          <BrandHero
+            eyebrow="Frontera online"
+            title="Salas y duelos"
+            subtitle="Abri una mesa, entra por Render y pelea en tiempo real con enlace, codigo o QR."
+            compact={!wide}
+          />
+        </View>
+
         <View style={styles.mainColumn}>
           <SectionCard eyebrow="Online" title="Duelo en tiempo real">
             <View style={styles.statusRow}>
@@ -210,7 +220,11 @@ const styles = StyleSheet.create({
   },
   wrapHorizontal: {
     flexDirection: "row",
-    alignItems: "stretch",
+    alignItems: "flex-start",
+    flexWrap: "wrap",
+  },
+  heroBox: {
+    width: "100%",
   },
   mainColumn: {
     flex: 1,
@@ -319,19 +333,18 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: palette.border,
   },
-  tileDisabled: {
-    opacity: 0.65,
-  },
   tilePressed: {
     opacity: 0.92,
-    transform: [{ scale: 0.99 }],
+  },
+  tileDisabled: {
+    opacity: 0.55,
   },
   tileIcon: {
     color: palette.goldSoft,
     fontSize: 18,
-    width: 26,
+    fontWeight: "900",
+    width: 30,
     textAlign: "center",
-    fontWeight: "800",
   },
   tileText: {
     flex: 1,
@@ -339,7 +352,7 @@ const styles = StyleSheet.create({
   },
   tileTitle: {
     color: palette.parchment,
-    fontSize: 15,
+    fontSize: 14,
     fontWeight: "700",
   },
   tileSubtitle: {
@@ -350,7 +363,7 @@ const styles = StyleSheet.create({
   comingSoon: {
     borderRadius: 999,
     paddingHorizontal: 8,
-    paddingVertical: 5,
+    paddingVertical: 4,
     backgroundColor: "rgba(255,255,255,0.06)",
     borderWidth: 1,
     borderColor: palette.border,
@@ -358,8 +371,8 @@ const styles = StyleSheet.create({
   comingSoonText: {
     color: palette.textSoft,
     fontSize: 10,
-    fontWeight: "700",
     textTransform: "uppercase",
+    fontWeight: "700",
   },
   roomList: {
     gap: 10,
@@ -374,14 +387,15 @@ const styles = StyleSheet.create({
   },
   errorBox: {
     borderRadius: radius.md,
+    backgroundColor: "rgba(180,93,86,0.18)",
     borderWidth: 1,
-    borderColor: "rgba(180,93,86,0.45)",
-    backgroundColor: "rgba(180,93,86,0.12)",
-    padding: 14,
+    borderColor: "rgba(180,93,86,0.42)",
+    paddingHorizontal: 14,
+    paddingVertical: 12,
   },
   errorText: {
-    color: "#f1cbc7",
+    color: "#ffd1cc",
     fontSize: 13,
-    lineHeight: 19,
+    lineHeight: 18,
   },
 });

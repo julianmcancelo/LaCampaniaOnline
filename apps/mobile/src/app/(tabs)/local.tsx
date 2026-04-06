@@ -1,6 +1,7 @@
 import { Redirect, router } from "expo-router";
 import { Pressable, StyleSheet, Text, View, useWindowDimensions } from "react-native";
 import { resolveGameViewport } from "../../components/game/viewport";
+import { BrandHero } from "../../components/ui/BrandHero";
 import { Screen } from "../../components/ui/Screen";
 import { SectionCard } from "../../components/ui/SectionCard";
 import type { DificultadLocal } from "../../store/profile-store";
@@ -9,7 +10,7 @@ import { palette, radius, spacing } from "../../theme/tokens";
 
 const difficulties: Array<{ title: string; difficulty: DificultadLocal; icon: string }> = [
   { title: "Recluta", difficulty: "recluta", icon: "R" },
-  { title: "Capitán", difficulty: "capitan", icon: "C" },
+  { title: "Capitan", difficulty: "capitan", icon: "C" },
   { title: "General", difficulty: "general", icon: "G" },
 ];
 
@@ -55,8 +56,17 @@ export default function PantallaLocal() {
   return (
     <Screen scroll={!wide}>
       <View style={[styles.wrap, wide ? styles.wrapHorizontal : null]}>
+        <View style={styles.heroBox}>
+          <BrandHero
+            eyebrow="Rodada local"
+            title="Sangre y Plata"
+            subtitle="Entrena en el campo, proba dificultades y afila tu rueda antes del duelo online."
+            compact={!wide}
+          />
+        </View>
+
         <View style={[styles.panel, wide ? styles.panelWide : null]}>
-          <SectionCard eyebrow="Local" title="Partida rápida">
+          <SectionCard eyebrow="Local" title="Partida rapida">
             <View style={styles.tileList}>
               <Tile
                 icon=">"
@@ -67,7 +77,7 @@ export default function PantallaLocal() {
               <Tile
                 icon="~"
                 title="Continuar"
-                subtitle="Retoma la dificultad que venías usando."
+                subtitle="Retoma la ultima dificultad que venias usando."
                 onPress={() => void abrirSolo(profile?.preferencias.lastCpuDifficulty ?? "capitan")}
               />
             </View>
@@ -78,7 +88,13 @@ export default function PantallaLocal() {
           <SectionCard eyebrow="CPU" title="Dificultad">
             <View style={styles.tileList}>
               {difficulties.map((item) => (
-                <Tile key={item.difficulty} icon={item.icon} title={item.title} subtitle="Abrir partida con esta dificultad." onPress={() => void abrirSolo(item.difficulty)} />
+                <Tile
+                  key={item.difficulty}
+                  icon={item.icon}
+                  title={item.title}
+                  subtitle="Abrir partida con esta dificultad."
+                  onPress={() => void abrirSolo(item.difficulty)}
+                />
               ))}
             </View>
           </SectionCard>
@@ -95,7 +111,12 @@ const styles = StyleSheet.create({
   },
   wrapHorizontal: {
     flexDirection: "row",
-    alignItems: "stretch",
+    alignItems: "flex-start",
+    flexWrap: "wrap",
+  },
+  heroBox: {
+    width: "100%",
+    marginBottom: 2,
   },
   panel: {
     width: "100%",
@@ -114,7 +135,7 @@ const styles = StyleSheet.create({
     borderRadius: radius.md,
     paddingHorizontal: 14,
     paddingVertical: 14,
-    backgroundColor: "rgba(255,255,255,0.05)",
+    backgroundColor: "rgba(255,255,255,0.04)",
     borderWidth: 1,
     borderColor: palette.border,
   },

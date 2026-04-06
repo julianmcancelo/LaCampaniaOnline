@@ -1,6 +1,7 @@
 import { router } from "expo-router";
 import { useEffect, useState } from "react";
 import { StyleSheet, Text, TextInput, View, useWindowDimensions } from "react-native";
+import { BrandHero } from "../components/ui/BrandHero";
 import { ActionButton } from "../components/ui/ActionButton";
 import { Screen } from "../components/ui/Screen";
 import { SectionCard } from "../components/ui/SectionCard";
@@ -23,15 +24,11 @@ export default function PantallaOnboarding() {
 
     let active = true;
     void getPendingInvite().then((invite) => {
-      if (!active) {
-        return;
-      }
-
+      if (!active) return;
       if (invite?.roomId) {
         router.replace(`/invitacion/${invite.roomId}` as never);
         return;
       }
-
       router.replace("/local" as never);
     });
 
@@ -44,9 +41,15 @@ export default function PantallaOnboarding() {
     <Screen>
       <View style={styles.wrap}>
         <View style={[styles.cardWrap, width > 900 ? styles.cardWrapWide : null]}>
-          <SectionCard eyebrow="Bienvenido" title="Antes de jugar, elegí tu nombre">
+          <BrandHero
+            eyebrow="Nombre de frontera"
+            title="Sangre y Plata"
+            subtitle="Antes de pisar la mesa, elegi como te van a nombrar en la rueda, el ranking y las salas."
+          />
+
+          <SectionCard eyebrow="Bienvenido" title="Elegi tu nombre de juego">
             <Text style={styles.copy}>
-              Lo vamos a usar para tus partidas, tu progreso y tu identidad dentro de la app.
+              Lo usamos para tus partidas, tu perfil, tus invitaciones y tu progreso.
             </Text>
             <TextInput
               value={nombre}
@@ -88,6 +91,7 @@ const styles = StyleSheet.create({
   },
   cardWrap: {
     width: "100%",
+    gap: 14,
   },
   cardWrapWide: {
     maxWidth: 620,

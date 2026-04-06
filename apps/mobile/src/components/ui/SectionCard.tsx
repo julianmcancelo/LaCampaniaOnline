@@ -21,10 +21,11 @@ const styles = StyleSheet.create({
   card: {
     borderRadius: radius.md,
     padding: spacing.md,
-    backgroundColor: "rgba(18, 35, 27, 0.88)",
+    backgroundColor: "rgba(23, 16, 12, 0.78)",
     borderWidth: 1,
     borderColor: palette.border,
     gap: spacing.sm,
+    overflow: "hidden",
   },
   cardCompact: {
     padding: spacing.sm,
@@ -33,9 +34,9 @@ const styles = StyleSheet.create({
   eyebrow: {
     color: palette.gold,
     fontSize: 10,
-    letterSpacing: 1.4,
+    letterSpacing: 1.8,
     textTransform: "uppercase",
-    fontWeight: "700",
+    fontWeight: "800",
   },
   eyebrowCompact: {
     fontSize: 8,
@@ -45,7 +46,7 @@ const styles = StyleSheet.create({
     color: palette.parchment,
     fontSize: 18,
     lineHeight: 22,
-    fontWeight: "700",
+    fontWeight: "800",
   },
   titleCompact: {
     fontSize: 14,
