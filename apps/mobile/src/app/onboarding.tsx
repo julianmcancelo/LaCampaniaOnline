@@ -4,8 +4,9 @@ import { StyleSheet, Text, TextInput, View, useWindowDimensions } from "react-na
 import { ActionButton } from "../components/ui/ActionButton";
 import { Screen } from "../components/ui/Screen";
 import { SectionCard } from "../components/ui/SectionCard";
+import { getPendingInvite } from "../lib/invitaciones";
 import { useProfileStore } from "../store/profile-store";
-import { palette, spacing } from "../theme/tokens";
+import { palette } from "../theme/tokens";
 
 export default function PantallaOnboarding() {
   const { width } = useWindowDimensions();
@@ -16,9 +17,27 @@ export default function PantallaOnboarding() {
   const [guardando, setGuardando] = useState(false);
 
   useEffect(() => {
-    if (hydrated && profile?.perfilCompleto) {
-      router.replace("/local" as never);
+    if (!(hydrated && profile?.perfilCompleto)) {
+      return;
     }
+
+    let active = true;
+    void getPendingInvite().then((invite) => {
+      if (!active) {
+        return;
+      }
+
+      if (invite?.roomId) {
+        router.replace(`/invitacion/${invite.roomId}` as never);
+        return;
+      }
+
+      router.replace("/local" as never);
+    });
+
+    return () => {
+      active = false;
+    };
   }, [hydrated, profile?.perfilCompleto]);
 
   return (
@@ -46,6 +65,11 @@ export default function PantallaOnboarding() {
                 setGuardando(true);
                 await saveDisplayName(nombre);
                 setGuardando(false);
+                const invite = await getPendingInvite();
+                if (invite?.roomId) {
+                  router.replace(`/invitacion/${invite.roomId}` as never);
+                  return;
+                }
                 router.replace("/local" as never);
               }}
             />

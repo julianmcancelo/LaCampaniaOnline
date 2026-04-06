@@ -6,6 +6,7 @@ import type {
   MatchPlayer,
   MatchState,
   ModoJuego,
+  RoomInvitePreview,
   RoomCreatePayload,
   RoomJoinPayload,
   RoomSummary,
@@ -284,4 +285,36 @@ export function getSocketTargets(room: Sala): string[] {
 
 export function toRoomSummary(room: Sala): RoomSummary {
   return toSummary(room);
+}
+
+export function getRoomInvitePreview(roomId: string): RoomInvitePreview {
+  const room = rooms.get(roomId);
+  if (!room) {
+    return {
+      roomId,
+      roomName: "Sala no encontrada",
+      status: "missing",
+      modeLabel: "Duelo / 2 jugadores",
+      playerCount: 0,
+      maxPlayers: 2,
+    };
+  }
+
+  let status: RoomInvitePreview["status"] = "available";
+  if (room.estado === "finished") {
+    status = "closed";
+  } else if (room.estado === "playing") {
+    status = "started";
+  } else if (room.playerSlots.length >= room.maxJugadores) {
+    status = "full";
+  }
+
+  return {
+    roomId: room.id,
+    roomName: room.nombre,
+    status,
+    modeLabel: room.modo === "alianzas" ? "Alianzas" : "Duelo / 2 jugadores",
+    playerCount: room.playerSlots.length,
+    maxPlayers: room.maxJugadores,
+  };
 }

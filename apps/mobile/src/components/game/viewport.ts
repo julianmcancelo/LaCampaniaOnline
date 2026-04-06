@@ -12,7 +12,7 @@ export function resolveGameViewport(width: number, height: number): GameViewport
   const shortSide = Math.min(width, height);
   const longSide = Math.max(width, height);
   const isLandscape = width > height;
-  const isTablet = shortSide >= 700 || longSide >= 1100;
+  const isTablet = shortSide >= 600 || longSide >= 960;
 
   if (isTablet && isLandscape) {
     return {

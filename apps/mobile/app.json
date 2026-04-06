@@ -2,7 +2,7 @@
   "expo": {
     "name": "La Campaña Mobile",
     "slug": "la-campania-mobile",
-    "version": "1.0.0",
+    "version": "0.0.2",
     "orientation": "default",
     "icon": "./assets/images/icon.png",
     "scheme": "lacampania",
@@ -11,6 +11,24 @@
       "icon": "./assets/expo.icon"
     },
     "android": {
+      "googleServicesFile": "./android/app/google-services.json",
+      "intentFilters": [
+        {
+          "action": "VIEW",
+          "autoVerify": true,
+          "data": [
+            {
+              "scheme": "https",
+              "host": "la-campania.vercel.app",
+              "pathPrefix": "/invitar/"
+            }
+          ],
+          "category": [
+            "BROWSABLE",
+            "DEFAULT"
+          ]
+        }
+      ],
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
         "foregroundImage": "./assets/images/android-icon-foreground.png",
@@ -18,7 +36,7 @@
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
       },
       "predictiveBackGestureEnabled": false,
-      "package": "com.anonymous.lacampaniamobile"
+      "package": "com.jcancelo.lacampaniamobile"
     },
     "web": {
       "output": "static",

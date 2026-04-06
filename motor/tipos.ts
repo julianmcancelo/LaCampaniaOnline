@@ -215,6 +215,17 @@ export interface RoomSummary {
   players: Array<Pick<MatchPlayer, "playerId" | "displayName" | "isReady" | "isHost" | "teamId" | "connected">>;
 }
 
+export type RoomInviteStatus = "available" | "full" | "started" | "closed" | "missing";
+
+export interface RoomInvitePreview {
+  roomId: string;
+  roomName: string;
+  status: RoomInviteStatus;
+  modeLabel: string;
+  playerCount: number;
+  maxPlayers: number;
+}
+
 export interface OpponentBattleView {
   playerId: string;
   displayName: string;

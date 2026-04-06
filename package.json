@@ -14,7 +14,7 @@
     "mobile:start": "npm --prefix apps/mobile run start",
     "mobile:android": "npm --prefix apps/mobile run android",
     "mobile:android:instalar": "cmd /c \"cd /d apps\\mobile\\android && gradlew.bat installDebug\"",
-    "mobile:android:abrir": "cmd /c \"%LOCALAPPDATA%\\Android\\Sdk\\platform-tools\\adb.exe shell am start -n com.anonymous.lacampaniamobile/.MainActivity\"",
+    "mobile:android:abrir": "cmd /c \"%LOCALAPPDATA%\\Android\\Sdk\\platform-tools\\adb.exe shell am start -n com.jcancelo.lacampaniamobile/.MainActivity\"",
     "mobile:web": "npm --prefix apps/mobile run web",
     "mobile:typecheck": "npm --prefix apps/mobile run typecheck"
   },
@@ -38,6 +38,7 @@
     "@types/react-dom": "^18",
     "@types/uuid": "^10.0.0",
     "postcss": "^8",
+    "sharp": "^0.34.5",
     "tailwindcss": "^3.4.1",
     "ts-node": "^10.9.2",
     "typescript": "^5"

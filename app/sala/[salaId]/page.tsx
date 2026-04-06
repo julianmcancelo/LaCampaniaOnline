@@ -8,6 +8,7 @@ import TableroJuego from "../../../componentes/juego/TableroJuego";
 import { usarEstadoJuego } from "../../../ganchos/usarEstadoJuego";
 import { usarSocket } from "../../../ganchos/usarSocket";
 import { obtenerSocket } from "../../../lib/socket";
+import { buildInviteUrl } from "../../../lib/invitaciones";
 import type { EquipoId } from "../../../motor/tipos";
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -23,7 +24,7 @@ function TarjetaInvitacion({ idSala }: { idSala: string }) {
   }, []);
 
   const codigoCort = idSala.slice(0, 8).toUpperCase();
-  const urlSala = typeof window !== "undefined" ? `${window.location.origin}/sala/${idSala}` : "";
+  const urlSala = typeof window !== "undefined" ? buildInviteUrl(idSala, window.location.origin) : "";
 
   async function copiar(tipo: "codigo" | "link") {
     const texto = tipo === "codigo" ? codigoCort : urlSala;

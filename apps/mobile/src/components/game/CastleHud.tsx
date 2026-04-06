@@ -42,7 +42,9 @@ export function CastleHud({
           <Text style={[styles.label, compact ? styles.labelCompact : null]} numberOfLines={1}>
             {entry.label}
           </Text>
-          <Text style={[styles.progress, compact ? styles.progressCompact : null]}>{entry.progress}/{entry.goal}</Text>
+          <Text style={[styles.progress, compact ? styles.progressCompact : null]}>
+            {entry.progress}/{entry.goal}
+          </Text>
           <Text style={[styles.meta, compact ? styles.metaCompact : null]}>{entry.relic ? `R${entry.relic}` : "SR"} · -{entry.remaining}</Text>
         </View>
       ))}

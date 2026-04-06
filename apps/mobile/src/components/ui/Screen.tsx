@@ -4,9 +4,13 @@ import { ScrollView, StyleSheet, View, useWindowDimensions } from "react-native"
 import { SafeAreaView } from "react-native-safe-area-context";
 import { palette, spacing } from "../../theme/tokens";
 
-export function Screen({ children, scroll = false }: PropsWithChildren<{ scroll?: boolean }>) {
+export function Screen({
+  children,
+  scroll = false,
+  edgeToEdge = false,
+}: PropsWithChildren<{ scroll?: boolean; edgeToEdge?: boolean }>) {
   const { width } = useWindowDimensions();
-  const horizontalPadding = width > 1100 ? spacing.xl : spacing.md;
+  const horizontalPadding = edgeToEdge ? (width > 1100 ? spacing.xs : spacing.xs) : width > 1100 ? spacing.xl : spacing.md;
   const content = scroll ? (
     <ScrollView
       contentContainerStyle={[styles.scrollContent, { paddingHorizontal: horizontalPadding }]}

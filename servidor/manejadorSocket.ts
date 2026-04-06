@@ -189,6 +189,8 @@ export function registrarEventosSocket(io: SocketServer): void {
 
     socket.on("room:leave", () => {
       const room = leaveRoom(playerId);
+      socket.emit("room:left");
+      socket.emit("room:list", listRoomSummaries());
       if (room) {
         broadcastRoom(io, room);
       } else {

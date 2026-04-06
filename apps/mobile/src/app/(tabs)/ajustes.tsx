@@ -1,5 +1,7 @@
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Pressable, StyleSheet, Text, TextInput, View, useWindowDimensions } from "react-native";
+import { ProfileAvatar } from "../../components/ui/ProfileAvatar";
+import { resolveGameViewport } from "../../components/game/viewport";
 import { ActionButton } from "../../components/ui/ActionButton";
 import { Screen } from "../../components/ui/Screen";
 import { SectionCard } from "../../components/ui/SectionCard";
@@ -7,27 +9,52 @@ import { useProfileStore, type PreferenciaOrientacionCelular } from "../../store
 import { palette, radius, spacing } from "../../theme/tokens";
 
 const orientationOptions: Array<{ value: PreferenciaOrientacionCelular; title: string; icon: string }> = [
-  { value: "portrait", title: "Vertical", icon: "▯" },
-  { value: "landscape", title: "Horizontal", icon: "▬" },
-  { value: "auto", title: "Auto", icon: "◌" },
+  { value: "portrait", title: "Vertical", icon: "V" },
+  { value: "landscape", title: "Horizontal", icon: "H" },
+  { value: "auto", title: "Auto", icon: "A" },
 ];
 
 export default function PantallaAjustes() {
   const { width, height } = useWindowDimensions();
-  const wide = width >= 900 && width > height;
+  const viewport = resolveGameViewport(width, height);
+  const wide = viewport.mode === "tabletLandscape";
   const profile = useProfileStore((state) => state.profile);
   const authStatus = useProfileStore((state) => state.authStatus);
+  const leaderboard = useProfileStore((state) => state.leaderboard);
+  const refreshLeaderboard = useProfileStore((state) => state.refreshLeaderboard);
   const saveDisplayName = useProfileStore((state) => state.saveDisplayName);
   const setPhoneOrientationPreference = useProfileStore((state) => state.setPhoneOrientationPreference);
   const [draft, setDraft] = useState(profile?.displayName ?? "");
   const [saved, setSaved] = useState(false);
+
+  useEffect(() => {
+    void refreshLeaderboard();
+  }, [refreshLeaderboard]);
+
+  const totalMatches = (profile?.progreso.localMatchesPlayed ?? 0) + (profile?.progreso.onlineMatchesPlayed ?? 0);
+  const totalWins = (profile?.progreso.localWins ?? 0) + (profile?.progreso.onlineWins ?? 0);
+  const winRate = totalMatches > 0 ? Math.round((totalWins / totalMatches) * 100) : 0;
+  const myRank = useMemo(() => leaderboard.findIndex((entry) => entry.uid === profile?.uid) + 1, [leaderboard, profile?.uid]);
 
   return (
     <Screen scroll={!wide}>
       <View style={[styles.columns, wide ? styles.columnsHorizontal : null]}>
         <View style={styles.column}>
           <SectionCard eyebrow="Perfil" title="Jugador">
-            <Text style={styles.copy}>Tu nombre se usa en partidas locales, online y progreso.</Text>
+            <View style={styles.profileHeader}>
+              <ProfileAvatar
+                size={62}
+                displayName={profile?.displayName || "Jugador"}
+                photoURL={profile?.photoURL}
+                avatarKind={profile?.avatarKind ?? "crest"}
+                crestId={profile?.crestId}
+              />
+              <View style={styles.profileHeaderText}>
+                <Text style={styles.profileName}>{profile?.displayName || "Sin nombre"}</Text>
+                <Text style={styles.copy}>Tu nombre se usa en partidas locales, online, ranking y progreso.</Text>
+              </View>
+            </View>
+
             <TextInput
               value={draft}
               onChangeText={(value) => {
@@ -50,7 +77,7 @@ export default function PantallaAjustes() {
             {saved ? <Text style={styles.saved}>Nombre guardado.</Text> : null}
           </SectionCard>
 
-          <SectionCard eyebrow="Pantalla" title="Orientacion del celular">
+          <SectionCard eyebrow="Pantalla" title="Orientación del celular">
             <View style={styles.optionList}>
               {orientationOptions.map((option) => {
                 const selected = profile?.preferencias.phoneOrientationPreference === option.value;
@@ -70,22 +97,67 @@ export default function PantallaAjustes() {
         </View>
 
         <View style={styles.column}>
-          <SectionCard eyebrow="Cuenta" title="Sesion y progreso">
+          <SectionCard eyebrow="Cuenta" title="Sesión y estadísticas">
             <View style={styles.row}>
               <Text style={styles.label}>UID</Text>
-              <Text style={styles.value}>{profile?.uid ?? "Sin sesion"}</Text>
+              <Text style={styles.value}>{profile?.uid ?? "Sin sesión"}</Text>
             </View>
             <View style={styles.row}>
               <Text style={styles.label}>Modo</Text>
-              <Text style={styles.value}>{authStatus === "ready" ? "Firebase activo" : "Solo local"}</Text>
-            </View>
-            <View style={styles.row}>
-              <Text style={styles.label}>Partidas locales</Text>
-              <Text style={styles.value}>{profile?.progreso.localMatchesPlayed ?? 0}</Text>
+              <Text style={styles.value}>{authStatus === "authenticated" ? "Firebase activo" : "Sin acceso activo"}</Text>
             </View>
             <View style={styles.row}>
               <Text style={styles.label}>Puntos</Text>
               <Text style={styles.value}>{profile?.progreso.puntos ?? 0}</Text>
+            </View>
+            <View style={styles.row}>
+              <Text style={styles.label}>Partidas</Text>
+              <Text style={styles.value}>{totalMatches}</Text>
+            </View>
+            <View style={styles.row}>
+              <Text style={styles.label}>Victorias</Text>
+              <Text style={styles.value}>{totalWins}</Text>
+            </View>
+            <View style={styles.row}>
+              <Text style={styles.label}>Winrate</Text>
+              <Text style={styles.value}>{winRate}%</Text>
+            </View>
+            <View style={styles.row}>
+              <Text style={styles.label}>Racha</Text>
+              <Text style={styles.value}>{profile?.progreso.winStreak ?? 0}</Text>
+            </View>
+            <View style={styles.row}>
+              <Text style={styles.label}>CPU más alta</Text>
+              <Text style={styles.value}>{profile?.progreso.highestCpuDifficultyWon ?? "-"}</Text>
+            </View>
+          </SectionCard>
+
+          <SectionCard eyebrow="Ranking" title="Tabla de posiciones">
+            <View style={styles.rankHeader}>
+              <Text style={styles.copy}>Top global simple por puntos. Google Play Games se suma en una etapa posterior.</Text>
+              <ActionButton label="Actualizar" tone="secondary" onPress={() => void refreshLeaderboard()} />
+            </View>
+            <View style={styles.row}>
+              <Text style={styles.label}>Tu posición</Text>
+              <Text style={styles.value}>{myRank > 0 ? `#${myRank}` : "Fuera del top"}</Text>
+            </View>
+            <View style={styles.rankList}>
+              {leaderboard.slice(0, 8).map((entry, index) => (
+                <View key={entry.uid} style={styles.rankRow}>
+                  <Text style={styles.rankPosition}>#{index + 1}</Text>
+                  <ProfileAvatar
+                    size={34}
+                    displayName={entry.displayName}
+                    photoURL={entry.photoURL}
+                    avatarKind={entry.avatarKind}
+                    crestId={entry.crestId}
+                  />
+                  <Text numberOfLines={1} style={styles.rankName}>
+                    {entry.displayName}
+                  </Text>
+                  <Text style={styles.rankScore}>{entry.puntos}</Text>
+                </View>
+              ))}
             </View>
           </SectionCard>
         </View>
@@ -101,11 +173,26 @@ const styles = StyleSheet.create({
   },
   columnsHorizontal: {
     flexDirection: "row",
-    alignItems: "flex-start",
+    alignItems: "stretch",
   },
   column: {
     flex: 1,
     gap: spacing.md,
+    minWidth: 0,
+  },
+  profileHeader: {
+    flexDirection: "row",
+    gap: 12,
+    alignItems: "center",
+  },
+  profileHeaderText: {
+    flex: 1,
+    gap: 4,
+  },
+  profileName: {
+    color: palette.parchment,
+    fontSize: 18,
+    fontWeight: "800",
   },
   copy: {
     color: palette.textSoft,
@@ -150,9 +237,10 @@ const styles = StyleSheet.create({
   },
   optionIcon: {
     color: palette.goldSoft,
-    fontSize: 20,
+    fontSize: 18,
     width: 24,
     textAlign: "center",
+    fontWeight: "800",
   },
   optionText: {
     color: palette.parchment,
@@ -180,5 +268,39 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     flexShrink: 1,
     textAlign: "right",
+  },
+  rankHeader: {
+    gap: 10,
+  },
+  rankList: {
+    gap: 8,
+  },
+  rankRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    borderRadius: radius.md,
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+    backgroundColor: "rgba(255,255,255,0.05)",
+    borderWidth: 1,
+    borderColor: palette.border,
+  },
+  rankPosition: {
+    width: 28,
+    color: palette.goldSoft,
+    fontSize: 12,
+    fontWeight: "800",
+  },
+  rankName: {
+    flex: 1,
+    color: palette.parchment,
+    fontSize: 13,
+    fontWeight: "700",
+  },
+  rankScore: {
+    color: palette.goldSoft,
+    fontSize: 13,
+    fontWeight: "900",
   },
 });

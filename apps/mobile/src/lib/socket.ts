@@ -16,9 +16,13 @@ function resolveSocketUrl(): string {
   return configured ? normalizeUrl(configured) : FALLBACK_SOCKET_URL;
 }
 
+export function getSocketUrl(): string {
+  return resolveSocketUrl();
+}
+
 function buildSocket(playerId: string | null): Socket {
   return io(resolveSocketUrl(), {
-    autoConnect: true,
+    autoConnect: false,
     transports: ["websocket", "polling"],
     reconnection: true,
     auth: playerId ? { playerId } : {},

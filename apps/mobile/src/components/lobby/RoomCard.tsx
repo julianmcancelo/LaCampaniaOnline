@@ -1,5 +1,6 @@
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import type { RoomSummary } from "../../../../../motor/tipos";
+import { ProfileAvatar } from "../ui/ProfileAvatar";
 import { palette, radius, spacing } from "../../theme/tokens";
 
 function modeLabel(room: RoomSummary): string {
@@ -24,6 +25,7 @@ export function RoomCard({ room, onJoin }: { room: RoomSummary; onJoin: () => vo
       <View style={styles.players}>
         {room.players.map((player) => (
           <View key={player.playerId} style={styles.playerPill}>
+            <ProfileAvatar size={28} displayName={player.displayName} avatarKind="crest" crestId={player.playerId} />
             <Text style={styles.playerText}>
               {player.displayName}
               {player.isHost ? " · Host" : ""}
@@ -92,6 +94,9 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   playerPill: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
     borderRadius: 999,
     backgroundColor: "rgba(255,255,255,0.06)",
     paddingHorizontal: 8,

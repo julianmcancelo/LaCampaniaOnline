@@ -1,12 +1,12 @@
 import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
-import { ActivityIndicator, StyleSheet, Text, View } from "react-native";
 import { useEffect, type ReactNode } from "react";
+import { ActivityIndicator, StyleSheet, Text, View } from "react-native";
 import * as Device from "expo-device";
 import * as ScreenOrientation from "expo-screen-orientation";
 import { useSocketBootstrap } from "../hooks/useSocketBootstrap";
-import { palette } from "../theme/tokens";
 import { useProfileStore } from "../store/profile-store";
+import { palette } from "../theme/tokens";
 
 function BootGate({ children }: { children: ReactNode }) {
   const hydrated = useProfileStore((state) => state.hydrated);
@@ -45,8 +45,8 @@ function BootGate({ children }: { children: ReactNode }) {
     return (
       <View style={styles.boot}>
         <ActivityIndicator color={palette.goldSoft} size="large" />
-        <Text style={styles.bootTitle}>La Campania</Text>
-        <Text style={styles.bootCopy}>Preparando tu perfil y la mesa movil.</Text>
+        <Text style={styles.bootTitle}>La Campaña</Text>
+        <Text style={styles.bootCopy}>Preparando tu perfil y la mesa móvil.</Text>
       </View>
     );
   }

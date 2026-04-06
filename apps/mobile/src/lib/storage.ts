@@ -4,6 +4,7 @@ export const STORAGE_KEYS = {
   profile: "lacampania.profile",
   preferences: "lacampania.preferences",
   lastCpuDifficulty: "lacampania.lastCpuDifficulty",
+  pendingInvite: "lacampania.pendingInvite",
 } as const;
 
 export async function saveJson<T>(key: string, value: T): Promise<void> {

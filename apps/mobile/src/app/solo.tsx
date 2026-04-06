@@ -2,6 +2,7 @@ import { router, useLocalSearchParams } from "expo-router";
 import { useEffect, useRef } from "react";
 import { StyleSheet, Text, View, useWindowDimensions } from "react-native";
 import { MesaTactica } from "../components/game/MesaTactica";
+import { resolveGameViewport } from "../components/game/viewport";
 import { Screen } from "../components/ui/Screen";
 import { decidirAccionCpu } from "../lib/solo/cpu";
 import { construirVistaLocal, type DificultadCpu } from "../lib/solo/tipos";
@@ -11,10 +12,11 @@ import { palette, spacing } from "../theme/tokens";
 
 export default function PantallaSolo() {
   const { width, height } = useWindowDimensions();
-  const scroll = width < height && width < 560;
+  const viewport = resolveGameViewport(width, height);
+  const scroll = viewport.mode !== "tabletLandscape";
   const params = useLocalSearchParams<{ dificultad?: DificultadCpu }>();
   const profile = useProfileStore((state) => state.profile);
-  const incrementLocalMatches = useProfileStore((state) => state.incrementLocalMatches);
+  const recordLocalMatch = useProfileStore((state) => state.recordLocalMatch);
   const { estado, iniciar, aplicar, cerrar, error, limpiarError } = useSoloStore();
   const recordedMatchEnd = useRef(false);
 
@@ -40,16 +42,15 @@ export default function PantallaSolo() {
   }, [estado, aplicar]);
 
   useEffect(() => {
-    const battle = estado?.match.currentBattle;
-    if (!battle) {
+    if (!estado?.match || !estado.match.winnerPlayerId) {
       return;
     }
 
-    if ((battle.phase === "BATTLE_OVER" || battle.phase === "MATCH_OVER") && !recordedMatchEnd.current) {
+    if (!recordedMatchEnd.current) {
       recordedMatchEnd.current = true;
-      void incrementLocalMatches();
+      void recordLocalMatch(estado.match.winnerPlayerId === estado.playerId ? "win" : "loss", estado.dificultad);
     }
-  }, [estado?.match.currentBattle?.phase, incrementLocalMatches]);
+  }, [estado, recordLocalMatch]);
 
   const battle = estado ? construirVistaLocal(estado.match, estado.playerId) : null;
   const match = estado?.match ?? null;
@@ -57,9 +58,9 @@ export default function PantallaSolo() {
 
   if (!estado || !battle || !match) {
     return (
-      <Screen scroll={scroll}>
+      <Screen scroll={scroll} edgeToEdge>
         <View style={styles.center}>
-          <Text style={styles.placeholderTitle}>Preparando rival automatico</Text>
+          <Text style={styles.placeholderTitle}>Preparando rival automático</Text>
           <Text style={styles.placeholderCopy}>Armando la partida local nativa.</Text>
         </View>
       </Screen>
@@ -67,7 +68,7 @@ export default function PantallaSolo() {
   }
 
   return (
-    <Screen scroll={scroll}>
+    <Screen scroll={scroll} edgeToEdge>
       <MesaTactica
         battleView={battle}
         scorePlayers={match.players}

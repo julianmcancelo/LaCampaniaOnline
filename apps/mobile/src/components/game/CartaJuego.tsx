@@ -218,12 +218,14 @@ export function TiraCartas({
   selectedCardIds,
   onCardPress,
   variant,
+  showTitle = true,
 }: {
   title: string;
   cards: Carta[];
   selectedCardIds?: string[];
   onCardPress?: (card: Carta) => void;
   variant?: GameViewportMode;
+  showTitle?: boolean;
 }) {
   const { width, height } = useWindowDimensions();
   const mode = variant ?? resolveGameViewport(width, height).mode;
@@ -231,7 +233,7 @@ export function TiraCartas({
 
   return (
     <View style={styles.block}>
-      <Text style={[styles.blockTitle, { fontSize: scale.blockTitleSize }]}>{title}</Text>
+      {showTitle ? <Text style={[styles.blockTitle, { fontSize: scale.blockTitleSize }]}>{title}</Text> : null}
       {cards.length === 0 ? (
         <View style={styles.empty}>
           <Text style={styles.emptyText}>Sin cartas</Text>
@@ -261,6 +263,7 @@ export function TiraUnidades({
   maxSlots = 5,
   emptyLabel = "Espacio",
   variant,
+  showTitle = true,
 }: {
   title: string;
   units: UnitInPlay[];
@@ -269,6 +272,7 @@ export function TiraUnidades({
   maxSlots?: number;
   emptyLabel?: string;
   variant?: GameViewportMode;
+  showTitle?: boolean;
 }) {
   const { width, height } = useWindowDimensions();
   const mode = variant ?? resolveGameViewport(width, height).mode;
@@ -277,7 +281,7 @@ export function TiraUnidades({
 
   return (
     <View style={styles.block}>
-      <Text style={[styles.blockTitle, { fontSize: scale.blockTitleSize }]}>{title}</Text>
+      {showTitle ? <Text style={[styles.blockTitle, { fontSize: scale.blockTitleSize }]}>{title}</Text> : null}
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={[styles.row, { gap: scale.rowGap }]}>
         {units.map((unit) => (
           <UnidadJuego
@@ -300,30 +304,30 @@ function getCardScale(mode: GameViewportMode) {
   switch (mode) {
     case "tabletLandscape":
       return {
-        cardWidth: 116,
-        cardHeight: 166,
-        unitHeight: 174,
-        slotWidth: 110,
-        slotHeight: 166,
-        cardPadding: 7,
+        cardWidth: 90,
+        cardHeight: 124,
+        unitHeight: 132,
+        slotWidth: 86,
+        slotHeight: 124,
+        cardPadding: 5,
         cardRadius: 18,
-        framePadding: 9,
+        framePadding: 7,
         frameRadius: 14,
-        innerGap: 8,
-        illustrationPadding: 10,
+        innerGap: 6,
+        illustrationPadding: 7,
         illustrationRadius: 16,
-        illustrationGap: 10,
-        orbSize: 18,
-        titleSize: 17,
-        titleLineHeight: 21,
+        illustrationGap: 7,
+        orbSize: 14,
+        titleSize: 14,
+        titleLineHeight: 17,
         kickerSize: 8,
-        metaSize: 10,
-        metaLineHeight: 13,
-        healthTrackHeight: 6,
-        slotTextSize: 11,
-        slotLineHeight: 15,
-        blockTitleSize: 10,
-        rowGap: 10,
+        metaSize: 9,
+        metaLineHeight: 11,
+        healthTrackHeight: 5,
+        slotTextSize: 10,
+        slotLineHeight: 13,
+        blockTitleSize: 9,
+        rowGap: 7,
       };
     case "phoneLandscape":
       return {

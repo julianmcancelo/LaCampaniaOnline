@@ -1,23 +1,40 @@
 import { router, useLocalSearchParams } from "expo-router";
-import { useEffect } from "react";
-import { StyleSheet, Text, View } from "react-native";
+import { useEffect, useMemo, useRef } from "react";
+import { StyleSheet, Text, View, useWindowDimensions } from "react-native";
 import type { AvailableAction, BattleAction, BattleActionType } from "../../../../../motor/tipos";
 import { MesaTactica } from "../../components/game/MesaTactica";
+import { InvitePanel } from "../../components/lobby/InvitePanel";
+import { resolveGameViewport } from "../../components/game/viewport";
+import { ProfileAvatar } from "../../components/ui/ProfileAvatar";
 import { ActionButton } from "../../components/ui/ActionButton";
 import { Screen } from "../../components/ui/Screen";
 import { SectionCard } from "../../components/ui/SectionCard";
 import { crearAccionSimple, etiquetaAccion } from "../../lib/acciones";
-import { obtenerSocket } from "../../lib/socket";
+import { getSocketUrl, obtenerSocket } from "../../lib/socket";
 import { useMobileGameStore } from "../../store/game-store";
+import { useProfileStore } from "../../store/profile-store";
 import { palette, radius, spacing } from "../../theme/tokens";
 
 export default function PantallaSala() {
+  const { width, height } = useWindowDimensions();
+  const viewport = resolveGameViewport(width, height);
   const params = useLocalSearchParams<{ roomId: string }>();
-  const { currentRoom, gameView, playerId, error, setError } = useMobileGameStore();
+  const profile = useProfileStore((state) => state.profile);
+  const { connection, transport, currentRoom, gameView, playerId, error, setError, resetRoomState } = useMobileGameStore();
+  const recordOnlineMatch = useProfileStore((state) => state.recordOnlineMatch);
   const battle = gameView?.battle ?? null;
   const room = gameView?.room ?? currentRoom;
   const match = gameView?.match ?? null;
   const availableActions = gameView?.availableActions ?? [];
+  const recordedMatchKey = useRef<string | null>(null);
+  const endpoint = useMemo(() => {
+    try {
+      return new URL(getSocketUrl()).host;
+    } catch {
+      return getSocketUrl();
+    }
+  }, []);
+  const meInRoom = room?.players.find((player) => player.playerId === playerId) ?? null;
 
   useEffect(() => {
     if (!room?.id) {
@@ -30,11 +47,32 @@ export default function PantallaSala() {
     }
   }, [params.roomId, room]);
 
+  useEffect(() => {
+    if (!match || !playerId) {
+      return;
+    }
+
+    const winnerKey = match.winnerPlayerId ? `player:${match.winnerPlayerId}` : match.winnerTeamId ? `team:${match.winnerTeamId}` : null;
+    if (!winnerKey) {
+      return;
+    }
+
+    const currentKey = `${match.matchId}:${winnerKey}`;
+    if (recordedMatchKey.current === currentKey) {
+      return;
+    }
+
+    const me = match.players.find((player) => player.playerId === playerId);
+    const won = match.winnerPlayerId ? match.winnerPlayerId === playerId : Boolean(me?.teamId && match.winnerTeamId === me.teamId);
+    recordedMatchKey.current = currentKey;
+    void recordOnlineMatch(won ? "win" : "loss");
+  }, [match, playerId, recordOnlineMatch]);
+
   async function ejecutarAccion(action: AvailableAction) {
     const socket = await obtenerSocket();
 
     if (action.type === "SET_READY") {
-      socket.emit("room:setReady", { ready: true });
+      socket.emit("room:setReady", { ready: !(meInRoom?.isReady ?? false) });
       return;
     }
 
@@ -57,6 +95,7 @@ export default function PantallaSala() {
   async function salirSala() {
     const socket = await obtenerSocket();
     socket.emit("room:leave");
+    resetRoomState();
     router.replace("/online" as never);
   }
 
@@ -72,16 +111,36 @@ export default function PantallaSala() {
   }
 
   return (
-    <Screen scroll>
+    <Screen scroll={viewport.mode === "phonePortrait"} edgeToEdge={Boolean(battle)}>
       <SectionCard eyebrow="Mesa tactica" title={room.nombre}>
         <View style={styles.topbar}>
           <View style={styles.topMeta}>
-            <View style={styles.badge}>
-              <Text style={styles.badgeText}>{room.modo === "alianzas" ? "Alianzas" : "Individual"}</Text>
+            <ProfileAvatar
+              size={40}
+              displayName={profile?.displayName || "Jugador"}
+              photoURL={profile?.photoURL}
+              avatarKind={profile?.avatarKind ?? "crest"}
+              crestId={profile?.crestId}
+            />
+            <View style={styles.topMetaText}>
+              <View style={styles.badge}>
+                <Text style={styles.badgeText}>{room.modo === "alianzas" ? "Alianzas" : "Individual"}</Text>
+              </View>
+              <Text style={styles.metaText}>
+                {room.players.length}/{room.maxJugadores} jugadores
+              </Text>
+              <Text style={styles.metaText}>
+                {connection === "connected"
+                  ? "Render activo"
+                  : connection === "connecting"
+                    ? "Conectando a Render"
+                    : connection === "disconnected"
+                      ? "Sin conexion"
+                      : "Error de red"}
+                {transport ? ` · ${transport}` : ""}
+                {` · ${endpoint}`}
+              </Text>
             </View>
-            <Text style={styles.metaText}>
-              {room.players.length}/{room.maxJugadores} jugadores
-            </Text>
           </View>
           <ActionButton label="Salir" onPress={() => void salirSala()} tone="secondary" />
         </View>
@@ -108,24 +167,38 @@ export default function PantallaSala() {
                 {availableActions
                   .filter((action) => action.enabled && (action.type === "SET_READY" || action.type === "START_MATCH"))
                   .map((action) => (
-                    <ActionButton key={action.type} label={etiquetaAccion(action.type)} onPress={() => void ejecutarAccion(action)} />
+                    <ActionButton
+                      key={action.type}
+                      label={action.type === "SET_READY" && meInRoom?.isReady ? "Quitar listo" : etiquetaAccion(action.type)}
+                      onPress={() => void ejecutarAccion(action)}
+                    />
                   ))}
               </View>
             </SectionCard>
           </View>
 
           <View style={styles.sideColumn}>
+            <InvitePanel roomId={room.id} />
             <SectionCard eyebrow="Jugadores" title="Mesa armada">
               <View style={styles.stack}>
                 {room.players.map((player) => (
                   <View key={player.playerId} style={styles.waitingPlayer}>
-                    <Text style={styles.waitingName}>
-                      {player.displayName}
-                      {player.playerId === playerId ? " · Vos" : ""}
-                    </Text>
-                    <Text style={styles.waitingMeta}>
-                      {player.isReady ? "Listo" : "Esperando"} · {player.connected ? "Conectado" : "Desconectado"}
-                    </Text>
+                    <ProfileAvatar
+                      size={36}
+                      displayName={player.displayName}
+                      photoURL={player.playerId === profile?.uid ? profile.photoURL : null}
+                      avatarKind={player.playerId === profile?.uid ? profile.avatarKind : "crest"}
+                      crestId={player.playerId === profile?.uid ? profile.crestId : player.playerId}
+                    />
+                    <View style={styles.waitingPlayerText}>
+                      <Text style={styles.waitingName}>
+                        {player.displayName}
+                        {player.playerId === playerId ? " · Vos" : ""}
+                      </Text>
+                      <Text style={styles.waitingMeta}>
+                        {player.isReady ? "Listo" : "Esperando"} · {player.connected ? "Conectado" : "Desconectado"}
+                      </Text>
+                    </View>
                   </View>
                 ))}
               </View>
@@ -162,6 +235,12 @@ const styles = StyleSheet.create({
     gap: spacing.md,
   },
   topMeta: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    flex: 1,
+  },
+  topMetaText: {
     flexDirection: "row",
     alignItems: "center",
     gap: 8,
@@ -205,11 +284,17 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
   },
   waitingPlayer: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
     borderRadius: radius.md,
     borderWidth: 1,
     borderColor: "rgba(212,160,23,0.12)",
     backgroundColor: "rgba(255,255,255,0.04)",
     padding: spacing.md,
+  },
+  waitingPlayerText: {
+    flex: 1,
     gap: 4,
   },
   waitingName: {

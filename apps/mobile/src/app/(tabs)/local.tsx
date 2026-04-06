@@ -1,15 +1,16 @@
-import { router } from "expo-router";
+import { Redirect, router } from "expo-router";
 import { Pressable, StyleSheet, Text, View, useWindowDimensions } from "react-native";
+import { resolveGameViewport } from "../../components/game/viewport";
 import { Screen } from "../../components/ui/Screen";
 import { SectionCard } from "../../components/ui/SectionCard";
-import { useProfileStore } from "../../store/profile-store";
-import { palette, radius, spacing } from "../../theme/tokens";
 import type { DificultadLocal } from "../../store/profile-store";
+import { reachedAnonymousLimit, useProfileStore } from "../../store/profile-store";
+import { palette, radius, spacing } from "../../theme/tokens";
 
 const difficulties: Array<{ title: string; difficulty: DificultadLocal; icon: string }> = [
-  { title: "Recluta", difficulty: "recluta", icon: "◌" },
-  { title: "Capitan", difficulty: "capitan", icon: "◈" },
-  { title: "General", difficulty: "general", icon: "✦" },
+  { title: "Recluta", difficulty: "recluta", icon: "R" },
+  { title: "Capitán", difficulty: "capitan", icon: "C" },
+  { title: "General", difficulty: "general", icon: "G" },
 ];
 
 function Tile({
@@ -36,9 +37,15 @@ function Tile({
 
 export default function PantallaLocal() {
   const { width, height } = useWindowDimensions();
-  const wide = width >= 900 && width > height;
+  const viewport = resolveGameViewport(width, height);
+  const wide = viewport.mode === "tabletLandscape";
+  const authStatus = useProfileStore((state) => state.authStatus);
   const profile = useProfileStore((state) => state.profile);
   const setLastCpuDifficulty = useProfileStore((state) => state.setLastCpuDifficulty);
+
+  if (authStatus !== "authenticated" || reachedAnonymousLimit(profile)) {
+    return <Redirect href={"/acceso" as never} />;
+  }
 
   async function abrirSolo(difficulty: DificultadLocal) {
     await setLastCpuDifficulty(difficulty);
@@ -46,22 +53,36 @@ export default function PantallaLocal() {
   }
 
   return (
-    <Screen>
+    <Screen scroll={!wide}>
       <View style={[styles.wrap, wide ? styles.wrapHorizontal : null]}>
-        <SectionCard eyebrow="Local" title="Partida rapida">
-          <View style={styles.tileList}>
-            <Tile icon="▶" title="Nueva partida" subtitle="Arranca una batalla local contra la CPU." onPress={() => void abrirSolo(profile?.preferencias.lastCpuDifficulty ?? "capitan")} />
-            <Tile icon="↺" title="Continuar" subtitle="Retoma la dificultad que venias usando." onPress={() => void abrirSolo(profile?.preferencias.lastCpuDifficulty ?? "capitan")} />
-          </View>
-        </SectionCard>
+        <View style={[styles.panel, wide ? styles.panelWide : null]}>
+          <SectionCard eyebrow="Local" title="Partida rápida">
+            <View style={styles.tileList}>
+              <Tile
+                icon=">"
+                title="Nueva partida"
+                subtitle="Arranca una batalla local contra la CPU."
+                onPress={() => void abrirSolo(profile?.preferencias.lastCpuDifficulty ?? "capitan")}
+              />
+              <Tile
+                icon="~"
+                title="Continuar"
+                subtitle="Retoma la dificultad que venías usando."
+                onPress={() => void abrirSolo(profile?.preferencias.lastCpuDifficulty ?? "capitan")}
+              />
+            </View>
+          </SectionCard>
+        </View>
 
-        <SectionCard eyebrow="CPU" title="Dificultad">
-          <View style={styles.tileList}>
-            {difficulties.map((item) => (
-              <Tile key={item.difficulty} icon={item.icon} title={item.title} subtitle="Abrir partida con esta dificultad." onPress={() => void abrirSolo(item.difficulty)} />
-            ))}
-          </View>
-        </SectionCard>
+        <View style={[styles.panel, wide ? styles.panelWide : null]}>
+          <SectionCard eyebrow="CPU" title="Dificultad">
+            <View style={styles.tileList}>
+              {difficulties.map((item) => (
+                <Tile key={item.difficulty} icon={item.icon} title={item.title} subtitle="Abrir partida con esta dificultad." onPress={() => void abrirSolo(item.difficulty)} />
+              ))}
+            </View>
+          </SectionCard>
+        </View>
       </View>
     </Screen>
   );
@@ -74,7 +95,14 @@ const styles = StyleSheet.create({
   },
   wrapHorizontal: {
     flexDirection: "row",
-    alignItems: "flex-start",
+    alignItems: "stretch",
+  },
+  panel: {
+    width: "100%",
+  },
+  panelWide: {
+    flex: 1,
+    minWidth: 0,
   },
   tileList: {
     gap: 10,
